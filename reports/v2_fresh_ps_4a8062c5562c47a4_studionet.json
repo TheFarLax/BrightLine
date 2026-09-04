@@ -31,7 +31,11 @@
     "panel_size": 6,
     "channel": "PANEL",
     "wall_seconds": 6584.6,
-    "generated_at": "2026-09-04T10:46:05Z"
+    "generated_at": "2026-09-04T12:40:53Z",
+    "topped_up": {
+      "holes": 10,
+      "filled": 1
+    }
   },
   "metrics": {
     "K": 2,
@@ -43,7 +47,7 @@
     "noise_floor": 0.0,
     "net_mean": 0.0625,
     "unanimous_insufficient": 3,
-    "inconclusive_rate": 0.2083
+    "inconclusive_rate": 0.1875
   },
   "findings": [
     {
@@ -420,14 +424,14 @@
       "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
       "channel": "PANEL",
       "distribution": {
-        "PARTIAL": 4
+        "PARTIAL": 5
       },
       "divergence": 0.0,
       "vote_divergence": 0.0,
       "self_split_rate": 0.0,
       "net_divergence": 0.0,
-      "n_valid": 4,
-      "n_inconclusive": 2,
+      "n_valid": 5,
+      "n_inconclusive": 1,
       "observations": [
         {
           "label": "openai/gpt-5.1@default",
@@ -492,15 +496,15 @@
         {
           "label": "moonshotai/kimi-k2.5@default",
           "model": "moonshotai/kimi-k2.5",
-          "kind": "INCONCLUSIVE",
-          "decision": "",
-          "status": "LLM_ERROR",
-          "confidence": 0,
-          "reason": "decision not in vocabulary: ",
-          "tx": "0x5f4e84d7cfa2ed97f30c51701c6caffbdb3292c2be093f16d1783b3a3a3c226a",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 95,
+          "reason": ": 2 of the 3 reproduction paths recorded at the time of posting are resolved, triggering the rule's provision that \"If some but not all recorded reproduction paths are resolved, pay the contributor that fraction of the bounty, rounded down to the nearest whole unit.\" The post-posting path is irrelevant because the rule keys the fraction solely to paths recorded at posting time.",
+          "tx": "0xf0d29d30988e98b9c3255206c3f886210f12f33e81461b6b6fd6ea6672a4e8c4",
           "tx_status": "FINALIZED",
-          "seconds": 142.0,
-          "note": "model produced no parseable decision",
+          "seconds": 132.3,
+          "note": "result=MAJORITY_AGREE",
           "self_consistent": true,
           "attempts": 1
         },
@@ -1073,5 +1077,5 @@
     }
   ],
   "disclaimer": "Split Score is an experimental measurement of panel divergence over a fixed probe set. It is not a probability that a dispute will occur, not a prediction of how a human court would rule, and not a judgment about whether the agreement is fair. Decidability is not fairness: a rule can be trivially easy to adjudicate and still be one-sided.",
-  "report_hash": "0xdd07536a1b8d293177a517c944919eb9d0d21eba715b1a4212f45007ac55b769"
+  "report_hash": "0x26a6d9f2ab1587c8c701a6249823e7811feeb245a32b840ebc30ae68f03b12bb"
 }

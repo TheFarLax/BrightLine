@@ -179,15 +179,49 @@ class Chain:
 
     def read(self, address: str, fn: str, args: list[Any] | None = None,
              final: bool = False) -> Any:
+        """Read a view method, tolerating both `gen_call` response shapes.
+
+        Studio-era endpoints return `result` as a hex string. The node API returns
+        the documented object (`data`, `eqOutputs`, `status`, `stdout`, ...), which
+        makes genlayer-py's `read_contract` fail on `"0x" + enc_result`. Request
+        encoding is identical either way -- RLP over `[calldata, b"\\x00"]` -- so we
+        build it with the SDK's own helpers and only normalize the response.
+        """
+        from genlayer_py.abi.calldata import decode as calldata_decode
+        from genlayer_py.abi.calldata import encode as calldata_encode
+        from genlayer_py.abi.transactions import serialize
+        from genlayer_py.contracts.utils import make_calldata_object
         from genlayer_py.types.transactions import TransactionHashVariant
 
-        return self.client.read_contract(
-            address=address, function_name=fn, args=args or [],
-            transaction_hash_variant=(
-                TransactionHashVariant.LATEST_FINAL if final
-                else TransactionHashVariant.LATEST_NONFINAL
-            ),
-        )
+        variant = (TransactionHashVariant.LATEST_FINAL if final
+                   else TransactionHashVariant.LATEST_NONFINAL)
+        payload = serialize([
+            calldata_encode(make_calldata_object(method=fn, args=args or [], kwargs=None)),
+            b"\x00",
+        ])
+        out = self.rpc("gen_call", [{
+            "type": "read", "to": address, "from": self.address(),
+            "data": payload, "transaction_hash_variant": variant.value,
+        }])
+        if out.get("error"):
+            raise RuntimeError(f"gen_call read {fn} failed: {out['error']}")
+
+        result = out.get("result")
+        if isinstance(result, dict):
+            status = result.get("status") or {}
+            if status and status.get("code") not in (0, None):
+                raise RuntimeError(
+                    f"gen_call read {fn}: {status.get('message')} "
+                    f"{result.get('stderr', '')}".strip())
+            encoded = result.get("data")
+        else:
+            encoded = result
+        if not encoded:
+            return None
+
+        hexstr = str(encoded)
+        hexstr = hexstr[2:] if hexstr.startswith("0x") else hexstr
+        return calldata_decode(bytes.fromhex(hexstr))
 
     def trace(self, tx_hash: str, round_: int = 0) -> dict:
         return self.client.debug_trace_transaction(transaction_hash=tx_hash, round=round_)

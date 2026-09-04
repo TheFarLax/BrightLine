@@ -13,7 +13,7 @@
 | noise floor | 0.0 | same-model self-disagreement, measured on every run |
 | net | 0.0625 | divergence above the noise floor |
 | unanimous INSUFFICIENT | 3 | rule decidably silent, panel agreed on that |
-| inconclusive | 0.2083 | infrastructure failures, excluded from both sides |
+| inconclusive | 0.1875 | infrastructure failures, excluded from both sides |
 
 ## Counterexamples
 
@@ -57,8 +57,8 @@ probe_generator          authored
 channel                  PANEL
 panel_size               6
 wall_seconds             6584.6
-generated_at             2026-09-04T10:46:05Z
-report_hash              0xdd07536a1b8d293177a517c944919eb9d0d21eba715b1a4212f45007ac55b769
+generated_at             2026-09-04T12:40:53Z
+report_hash              0x26a6d9f2ab1587c8c701a6249823e7811feeb245a32b840ebc30ae68f03b12bb
 ```
 
 _Split Score is an experimental measurement of panel divergence over a fixed probe set. It is not a probability that a dispute will occur, not a prediction of how a human court would rule, and not a judgment about whether the agreement is fair. Decidability is not fairness: a rule can be trivially easy to adjudicate and still be one-sided._
