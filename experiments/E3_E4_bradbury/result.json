@@ -1,0 +1,9 @@
+{
+  "network": "testnet-bradbury",
+  "address": "0xCA71D5D065833919207316a62A61b599639500f0",
+  "started": "2026-09-04T08:11:18Z",
+  "balance": "0",
+  "gate_e3_pass": false,
+  "gate_e4_pass": null,
+  "blocked_on": "faucet funding (GitHub OAuth + Turnstile)"
+}

@@ -1,0 +1,21 @@
+networks:
+  default: studionet
+
+  localnet:
+    url: "http://127.0.0.1:4000/api"
+    leader_only: false
+
+  studionet:
+    # Hosted Studio: accounts auto-generated, validators and LLM providers supplied
+    # by the network. This is the working environment here because the host has no
+    # Docker and therefore no local Studio.
+    leader_only: false
+
+  # testnet_bradbury is deliberately absent. gltest would demand an account key at
+  # config-load time even for unrelated test runs; Bradbury access goes through
+  # brightline.chain.Chain, which reads BRIGHTLINE_PRIVATE_KEY (or a local dev
+  # keyfile) only when that network is actually selected.
+
+paths:
+  contracts: "contracts"
+  artifacts: "artifacts"

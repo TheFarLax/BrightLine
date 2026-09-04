@@ -1,0 +1,32 @@
+{
+  "network": "studionet",
+  "started": "2026-09-04T05:36:04Z",
+  "address": "0xCA71D5D065833919207316a62A61b599639500f0",
+  "balance": "100000000000000000000",
+  "deploy": {
+    "address": "0xd44c27fF0399e4Feaeb6706FABdA76e98D1ce47c",
+    "tx": "0xfb3d3fd69745741fa1cd1f9c45be72a6e8e0ba31e0a6046e8ab3d45f2e11fc1b",
+    "seconds": 10.2
+  },
+  "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+  "probe_id": "0x1ba1c4b4feb968b5ae828fe818d1ebb01e2a6a7eb86d3bfffca4c595c89c84e9",
+  "register_rule": {
+    "tx": "0x4b6a7a4c9d5faec1112c4b14d1954c1d543d5bbaa3821020f7784822fd588999",
+    "status": "5",
+    "seconds": 10.3
+  },
+  "register_probe": {
+    "tx": "0x0a04c011a98aed2842dd0b4b3481ea2ac44aa5f8a05fd1c8238d4e4ae086d860",
+    "status": "5",
+    "seconds": 9.5
+  },
+  "adjudicate": {
+    "tx": "0x8150aa98b7d5727dedab21563cf61a92abe6e6cce236e9c488194bd1809f49f3",
+    "status": "6",
+    "execution_result": "",
+    "seconds": 108.8
+  },
+  "ruling_raw": "{}",
+  "ruling": {},
+  "gate_e1_pass": false
+}

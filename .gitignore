@@ -1,0 +1,6 @@
+.venv/
+.brightline/
+__pycache__/
+*.pyc
+artifacts/
+.env

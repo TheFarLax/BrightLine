@@ -1,0 +1,1289 @@
+{
+  "schema": "brightline.report/1",
+  "rule": {
+    "schema": "brightline.spec/1",
+    "label": "v1",
+    "title": "Bounty payout on a working fix",
+    "domain": "open-source bounty / agentic contributor payment",
+    "rule_text": "Pay the contributor if the contributor delivers a working fix.",
+    "normalized": "Pay the contributor if the contributor delivers a working fix.",
+    "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+    "notes": "The unimproved rule. Names an obligation and a payment trigger, and specifies\nnothing about who decides whether the fix works, which evidence governs, what\nhappens when evidence conflicts or is missing, when the deadline bites, or what\npartial delivery earns."
+  },
+  "provenance": {
+    "network": "studionet",
+    "contract_address": "0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7",
+    "runner_depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
+    "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+    "rule_label": "v1",
+    "probe_set_id": "ps_6ce467da9d20c1f2",
+    "adversary_version": "adv-v1.0.0",
+    "adversary_prompt_hash": "0x08391c62bcae8c4105b4dadabb5af678c7607bdf56d06648d0ab2d4ebd5aa1a8",
+    "probe_generator": "authored",
+    "panel_models": [
+      "openai/gpt-5.1",
+      "anthropic/claude-sonnet-4.5",
+      "google/gemini-3-flash-preview",
+      "deepseek/deepseek-v3.2",
+      "moonshotai/kimi-k2.5",
+      "qwen/qwen3-235b-a22b-2507"
+    ],
+    "panel_size": 6,
+    "channel": "PANEL",
+    "wall_seconds": 924.1,
+    "generated_at": "2026-09-04T08:08:31Z"
+  },
+  "metrics": {
+    "K": 4,
+    "N": 8,
+    "N_measurable": 8,
+    "tau": 0.2,
+    "split_mean": 0.3125,
+    "split_max": 0.6667,
+    "noise_floor": 0.0,
+    "net_mean": 0.3125,
+    "unanimous_insufficient": 0,
+    "inconclusive_rate": 0.0
+  },
+  "findings": [
+    {
+      "probe_id": "0xef8b49b9341a9090daa21d17ab2ebd4475e9e523de92aa14f18ec0a1680e4c6e",
+      "index": 0,
+      "family": "regression_after_fix",
+      "divergence": 0.6667,
+      "self_split_rate": 0.0,
+      "distribution": {
+        "ACCEPT": 2,
+        "INSUFFICIENT": 2,
+        "REJECT": 2
+      },
+      "scenario": {
+        "narrative": "The contributor submitted a change that closes the reported defect. After the change was merged, a defect that had been closed five weeks earlier began reproducing again in the same module. No other behaviour changed.",
+        "facts": [
+          {
+            "k": "reported_defect_closed",
+            "v": "yes"
+          },
+          {
+            "k": "previously_closed_defect_reproducing",
+            "v": "yes"
+          },
+          {
+            "k": "same_module",
+            "v": "yes"
+          },
+          {
+            "k": "submitted_before_deadline",
+            "v": "yes"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "issue_history",
+          "reproduction_log"
+        ],
+        "evidence_absent": []
+      },
+      "camps": {
+        "ACCEPT": [
+          {
+            "model": "openai/gpt-5.1",
+            "confidence": 86,
+            "reason": "The rule only requires that the contributor \"delivers a working fix\" for the reported defect, and the facts state that the submitted change closes the reported defect; the rule does not address regressions of previously closed defects or impose any additional conditions.",
+            "tx": "0x92792d3cb5999f9859e26dc07ce2715858a293eb4285c16dfd017d826e7a194a"
+          },
+          {
+            "model": "qwen/qwen3-235b-a22b-2507",
+            "confidence": 85,
+            "reason": "The rule requires payment if the contributor delivers a working fix. The facts indicate the defect was closed after the contributor's change but later began reproducing again, implying the fix did not permanently resolve the issue. Since the rule does not specify durability or long-term effectiveness, and the evidence shows the fix was initially accepted (closed defect), the rule entitles the cont",
+            "tx": "0xd0cd39392ba54218a2a1c01536633872d7388d702f2acfd5d360f6217d907c80"
+          }
+        ],
+        "REJECT": [
+          {
+            "model": "anthropic/claude-sonnet-4.5",
+            "confidence": 90,
+            "reason": "The rule requires delivery of 'a working fix.' The contributor's change closed the reported defect but caused a previously-closed defect to reproduce again in the same module, indicating the fix introduced a regression. A fix that breaks existing functionality does not qualify as 'working.'",
+            "tx": "0xbba722b3eaaee45ed3aa2980f7a707698a064d527c77280f16bda4c9419c363d"
+          },
+          {
+            "model": "google/gemini-3-flash-preview",
+            "confidence": 90,
+            "reason": "The rule requires a 'working fix', but the contributor's submission caused a regression by reintroducing a previously closed defect in the same module.",
+            "tx": "0xa1a29da803095e50a02b8456adf0fd8d6f649c328c27c1b54ab515bf50aa43b2"
+          }
+        ],
+        "INSUFFICIENT": [
+          {
+            "model": "deepseek/deepseek-v3.2",
+            "confidence": 75,
+            "reason": "The rule requires delivering a working fix; the facts state the submitted change closes the reported defect, but also causes a previously closed defect to reproduce again, which may indicate the fix is not fully 'working' as intended.",
+            "tx": "0xbff6c82dc2616dab7e685562e0e5913c90c7e779473d85019668d70ff70d1254"
+          },
+          {
+            "model": "moonshotai/kimi-k2.5",
+            "confidence": 90,
+            "reason": "The rule conditions payment on delivery of a 'working fix,' but does not define whether 'working' requires merely closing the reported defect or also requires not causing regressions such as reopening previously closed defects. The facts establish both that the reported defect was closed and that a regression occurred in the same module, presenting conflicting indicators of 'working' status withou",
+            "tx": "0xc626692eb3afae7967ff6f61cb51cd7e2e04470456d0443de16d1fc49d28cf51"
+          }
+        ]
+      },
+      "missing_specification": [
+        "whether collateral breakage counts against performance",
+        "the scope boundary of the obligation"
+      ]
+    },
+    {
+      "probe_id": "0x58dfbfc255ff91d681615919edf9066f41cb2bcb3ca2ede1e4c31947a9a48a4a",
+      "index": 1,
+      "family": "conflicting_evidence",
+      "divergence": 0.5,
+      "self_split_rate": 0.0,
+      "distribution": {
+        "ACCEPT": 3,
+        "INSUFFICIENT": 3
+      },
+      "scenario": {
+        "narrative": "The change closes the reported defect. Automated checks on the project's primary runner report every check passing. Automated checks on the project's secondary runner report one failure, in a module the change did not touch. The maintainer has not commented.",
+        "facts": [
+          {
+            "k": "reported_defect_closed",
+            "v": "yes"
+          },
+          {
+            "k": "checks_primary_runner",
+            "v": "pass"
+          },
+          {
+            "k": "checks_secondary_runner",
+            "v": "fail (untouched module)"
+          },
+          {
+            "k": "maintainer_confirmation",
+            "v": "none"
+          },
+          {
+            "k": "submitted_before_deadline",
+            "v": "yes"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "primary_runner_log",
+          "secondary_runner_log"
+        ],
+        "evidence_absent": [
+          "maintainer_statement"
+        ]
+      },
+      "camps": {
+        "INSUFFICIENT": [
+          {
+            "model": "openai/gpt-5.1",
+            "confidence": 78,
+            "reason": "The rule grants payment if the contributor delivers a \"working fix\"; the reported defect is closed and all checks pass on the primary runner, while the failure is in an untouched module on a secondary runner, and the rule provides no further criteria for what counts as \"working\" or how to treat unrelated failures.",
+            "tx": "0x4a91aed33deb966617201a95404cf20bb34b86512d363db9bfc5ca2d20c34d4a"
+          },
+          {
+            "model": "anthropic/claude-sonnet-4.5",
+            "confidence": 85,
+            "reason": "The rule requires delivery of 'a working fix.' The primary runner passes all checks and the defect is closed, but the secondary runner fails. The rule does not define whether 'working' requires passing all runners, only primary, or tolerates pre-existing failures in untouched modules.",
+            "tx": "0xae6a5480ea9a1bd4bcc15c2883135138c87def115318b1b9f9dc68cf0d207711"
+          },
+          {
+            "model": "deepseek/deepseek-v3.2",
+            "confidence": 85,
+            "reason": "The rule requires 'a working fix', and the facts state the change closes the reported defect and passes the primary automated checks, while the secondary failure is in an untouched module. The rule does not specify how to handle such a conflicting secondary failure or require maintainer confirmation.",
+            "tx": "0x047d566b1d66e01435da193267d2a0146571b0802e2b2ba19e55ff7e912b4cad"
+          }
+        ],
+        "ACCEPT": [
+          {
+            "model": "google/gemini-3-flash-preview",
+            "confidence": 100,
+            "reason": "The contributor delivered a fix that closes the reported defect and passes primary runner checks; the secondary runner failure occurred in an untouched module, indicating the fix itself is working.",
+            "tx": "0x942cc78a9a4eb54cc956e2653224d2650b9f5cf0eb5621bfac04d1e2d39aeeb9"
+          },
+          {
+            "model": "moonshotai/kimi-k2.5",
+            "confidence": 95,
+            "reason": ": The rule requires payment if the contributor delivers a \"working fix\". The facts establish that the contributor closed the reported defect and the only check failure occurred in a module the change did not touch, indicating the fix itself is functional and the failure is unrelated to the delivered work. Therefore, the contributor delivered a working fix.",
+            "tx": "0xbb66c0269cefe6703b9a329acb1d2623dc29ec21634332f05bc5605fcbdce62d"
+          },
+          {
+            "model": "qwen/qwen3-235b-a22b-2507",
+            "confidence": 85,
+            "reason": "The rule states to pay if the contributor delivers a working fix. The defect is closed and the primary runner, representing the main project checks, passes; the secondary runner fails in an untouched module, which does not undermine the fix's working status under the rule as written.",
+            "tx": "0x6f7444d47a1a0ee40aabed0b1e0daae043bbafd03af94409e27b8c974d24b35e"
+          }
+        ]
+      },
+      "missing_specification": [
+        "which source of truth is authoritative",
+        "the tie-break when two authorities disagree"
+      ]
+    },
+    {
+      "probe_id": "0x0fcb72b329e1a5286debdda68253224e32868e9c4e956d34eb2d45cb03d97d5d",
+      "index": 4,
+      "family": "partial_completion",
+      "divergence": 0.5,
+      "self_split_rate": 0.0,
+      "distribution": {
+        "INSUFFICIENT": 3,
+        "REJECT": 3
+      },
+      "scenario": {
+        "narrative": "The reported defect had two documented reproduction paths. The contributor's change eliminates the first path entirely. The second path still reproduces the defect. The contributor stated they consider the remaining path a separate issue.",
+        "facts": [
+          {
+            "k": "reproduction_paths_reported",
+            "v": "2"
+          },
+          {
+            "k": "paths_fixed",
+            "v": "1"
+          },
+          {
+            "k": "paths_still_reproducing",
+            "v": "1"
+          },
+          {
+            "k": "contributor_position",
+            "v": "remaining path is a separate issue"
+          },
+          {
+            "k": "automated_checks",
+            "v": "pass"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "reproduction_logs_both_paths"
+        ],
+        "evidence_absent": [
+          "maintainer_ruling_on_scope"
+        ]
+      },
+      "camps": {
+        "REJECT": [
+          {
+            "model": "openai/gpt-5.1",
+            "confidence": 93,
+            "reason": "The rule requires payment only if the contributor delivers a \"working fix\"; since one documented reproduction path still reproduces the defect, the fix is not fully working under the rule as written.",
+            "tx": "0x0166f698f415126b625552328578f49e3c5bf8af6a2d6f1606b95d7173822119"
+          },
+          {
+            "model": "google/gemini-3-flash-preview",
+            "confidence": 90,
+            "reason": "The rule requires a 'working fix', but the facts show the defect still reproduces via one of the two reported paths, making the fix incomplete according to the reported scope.",
+            "tx": "0x7b7620b66112fbbb028981f9d13672c8df253d063d3d7be1e79b71849f8cf014"
+          },
+          {
+            "model": "qwen/qwen3-235b-a22b-2507",
+            "confidence": 95,
+            "reason": "The rule requires a 'working fix' to entitle payment, but the facts show only one of two reproduction paths is fixed, and the defect still reproduces on the second path. The rule does not specify partial credit for incomplete fixes.",
+            "tx": "0x818e5e81193cfff15cab7004c833eda13a64c4a12aaded3e2dd366baace3416a"
+          }
+        ],
+        "INSUFFICIENT": [
+          {
+            "model": "anthropic/claude-sonnet-4.5",
+            "confidence": 85,
+            "reason": "The rule requires delivery of 'a working fix' but does not define whether a fix must resolve all reproduction paths of a reported defect or only some. With one path still reproducing the defect, whether the fix qualifies as 'working' cannot be determined from the rule text alone.",
+            "tx": "0x666356ce85756c2d3b206229de55ca03f78ef209d6ed21340ed1e77d24377b92"
+          },
+          {
+            "model": "deepseek/deepseek-v3.2",
+            "confidence": 85,
+            "reason": "The rule requires 'a working fix' for the reported defect, but the facts show only one of two reproduction paths was fixed, with the second still reproducing.",
+            "tx": "0x608239667360d17efdada3f29b6a695def0cb14f89e539e1fc3904b27deab1ae"
+          },
+          {
+            "model": "moonshotai/kimi-k2.5",
+            "confidence": 95,
+            "reason": ": The rule requires delivery of \"a working fix,\" but does not define whether this means fixing all documented reproduction paths of a defect or if fixing a subset suffices when the contributor claims the remainder is a \"separate issue.\" Determining whether the obligation is satisfied requires a missing scope boundary ruling (evidence_absent: maintainer_ruling_on_scope) to establish if the still-re",
+            "tx": "0x69f4b8fd9881e64a8eb1b7b0bf1e4678d2a951667f93cd122b627d576a453025"
+          }
+        ]
+      },
+      "missing_specification": [
+        "what fraction of performance earns what fraction of payment",
+        "whether partial performance is a distinct outcome or a failure"
+      ]
+    },
+    {
+      "probe_id": "0xda5794d38255d0991a2f113914ab525cbfd1823c845b1bac150827ce2d24c044",
+      "index": 7,
+      "family": "criteria_gap",
+      "divergence": 0.3333,
+      "self_split_rate": 0.0,
+      "distribution": {
+        "ACCEPT": 4,
+        "INSUFFICIENT": 2
+      },
+      "scenario": {
+        "narrative": "The reported defect is that an operation is unacceptably slow. The contributor's change reduces the operation's runtime from 40 seconds to 9 seconds. The original report did not state a target runtime. The operation still takes longer than comparable operations in the project.",
+        "facts": [
+          {
+            "k": "defect_type",
+            "v": "performance"
+          },
+          {
+            "k": "runtime_before",
+            "v": "40s"
+          },
+          {
+            "k": "runtime_after",
+            "v": "9s"
+          },
+          {
+            "k": "target_runtime_stated",
+            "v": "no"
+          },
+          {
+            "k": "slower_than_comparable_operations",
+            "v": "yes"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "benchmark_before",
+          "benchmark_after"
+        ],
+        "evidence_absent": [
+          "acceptance_threshold"
+        ]
+      },
+      "camps": {
+        "ACCEPT": [
+          {
+            "model": "openai/gpt-5.1",
+            "confidence": 94,
+            "reason": "The rule requires payment if the contributor delivers a \"working fix\"; the change reduces runtime from 40s to 9s, addressing the reported performance defect, and there is no requirement that performance match comparable operations or meet a specific target.",
+            "tx": "0xaecf284f69aaaafc1b49695136ff14bb773b3181cd0c8b9d7c246eda6aeb7ee8"
+          },
+          {
+            "model": "google/gemini-3-flash-preview",
+            "confidence": 100,
+            "reason": "The contributor delivered a fix that reduced runtime from 40s to 9s, satisfying the rule's requirement for a 'working fix' for the reported performance defect.",
+            "tx": "0x3c9d8da1a58b0b449338b99e93ca5e2e4fbcc654dd5617bba60dff275debfd58"
+          },
+          {
+            "model": "deepseek/deepseek-v3.2",
+            "confidence": 90,
+            "reason": "The rule requires a 'working fix', and the facts show a significant performance improvement (runtime reduced from 40s to 9s), which qualifies as a fix for the reported performance defect.",
+            "tx": "0x55dff7e762d53ad72c22be4cb4bc5f4d65c235aaac70f3325c08ba93174e76fc"
+          },
+          {
+            "model": "qwen/qwen3-235b-a22b-2507",
+            "confidence": 95,
+            "reason": "The rule conditions payment on delivering a 'working fix,' and the evidence shows a performance defect was addressed with a significant runtime reduction from 40s to 9s, which constitutes a working improvement. The rule does not require meeting a target runtime or parity with comparable operations to qualify as a working fix.",
+            "tx": "0xb2198524a6e87104965f2ce3a9a2867ef2637328edacdafa74eb8f7ba336cccc"
+          }
+        ],
+        "INSUFFICIENT": [
+          {
+            "model": "anthropic/claude-sonnet-4.5",
+            "confidence": 85,
+            "reason": "The rule requires delivery of 'a working fix.' The facts show the contributor reduced runtime from 40s to 9s, which is a substantial improvement. However, the rule does not define what constitutes 'a working fix' for a performance defect—whether any improvement suffices, whether the operation must meet unstated performance targets, or whether it must match comparable operations. Without these crit",
+            "tx": "0xd59d11a07bffdb4137e719576e37e22a961059211486fe6bd0d5ce564e60a701"
+          },
+          {
+            "model": "moonshotai/kimi-k2.5",
+            "confidence": 90,
+            "reason": "The rule requires determining whether the contributor delivered a 'working fix,' but the facts lack an acceptance threshold or defined criteria for what constitutes 'working' for this performance defect; the fix remains slower than comparable operations and the original report stated no target runtime, so applying the rule would require supplying a missing source of truth to resolve whether the pe",
+            "tx": "0x4cfc747027d5ebc72a6568e643c89e02e72faa6941f946b00c40c5a7ecf51b66"
+          }
+        ]
+      },
+      "missing_specification": [
+        "a measurable acceptance threshold for the operative term"
+      ]
+    }
+  ],
+  "probes": [
+    {
+      "probe_id": "0xef8b49b9341a9090daa21d17ab2ebd4475e9e523de92aa14f18ec0a1680e4c6e",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "channel": "PANEL",
+      "distribution": {
+        "ACCEPT": 2,
+        "INSUFFICIENT": 2,
+        "REJECT": 2
+      },
+      "divergence": 0.6667,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.6667,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 86,
+          "reason": "The rule only requires that the contributor \"delivers a working fix\" for the reported defect, and the facts state that the submitted change closes the reported defect; the rule does not address regressions of previously closed defects or impose any additional conditions.",
+          "tx": "0x92792d3cb5999f9859e26dc07ce2715858a293eb4285c16dfd017d826e7a194a",
+          "tx_status": "ACCEPTED",
+          "seconds": 10.8,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires delivery of 'a working fix.' The contributor's change closed the reported defect but caused a previously-closed defect to reproduce again in the same module, indicating the fix introduced a regression. A fix that breaks existing functionality does not qualify as 'working.'",
+          "tx": "0xbba722b3eaaee45ed3aa2980f7a707698a064d527c77280f16bda4c9419c363d",
+          "tx_status": "FINALIZED",
+          "seconds": 27.7,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires a 'working fix', but the contributor's submission caused a regression by reintroducing a previously closed defect in the same module.",
+          "tx": "0xa1a29da803095e50a02b8456adf0fd8d6f649c328c27c1b54ab515bf50aa43b2",
+          "tx_status": "FINALIZED",
+          "seconds": 10.5,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 75,
+          "reason": "The rule requires delivering a working fix; the facts state the submitted change closes the reported defect, but also causes a previously closed defect to reproduce again, which may indicate the fix is not fully 'working' as intended.",
+          "tx": "0xbff6c82dc2616dab7e685562e0e5913c90c7e779473d85019668d70ff70d1254",
+          "tx_status": "FINALIZED",
+          "seconds": 24.3,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 2
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule conditions payment on delivery of a 'working fix,' but does not define whether 'working' requires merely closing the reported defect or also requires not causing regressions such as reopening previously closed defects. The facts establish both that the reported defect was closed and that a regression occurred in the same module, presenting conflicting indicators of 'working' status withou",
+          "tx": "0xc626692eb3afae7967ff6f61cb51cd7e2e04470456d0443de16d1fc49d28cf51",
+          "tx_status": "FINALIZED",
+          "seconds": 49.3,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires payment if the contributor delivers a working fix. The facts indicate the defect was closed after the contributor's change but later began reproducing again, implying the fix did not permanently resolve the issue. Since the rule does not specify durability or long-term effectiveness, and the evidence shows the fix was initially accepted (closed defect), the rule entitles the cont",
+          "tx": "0xd0cd39392ba54218a2a1c01536633872d7388d702f2acfd5d360f6217d907c80",
+          "tx_status": "FINALIZED",
+          "seconds": 10.0,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 0,
+      "family": "regression_after_fix"
+    },
+    {
+      "probe_id": "0x58dfbfc255ff91d681615919edf9066f41cb2bcb3ca2ede1e4c31947a9a48a4a",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "channel": "PANEL",
+      "distribution": {
+        "ACCEPT": 3,
+        "INSUFFICIENT": 3
+      },
+      "divergence": 0.5,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.5,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 78,
+          "reason": "The rule grants payment if the contributor delivers a \"working fix\"; the reported defect is closed and all checks pass on the primary runner, while the failure is in an untouched module on a secondary runner, and the rule provides no further criteria for what counts as \"working\" or how to treat unrelated failures.",
+          "tx": "0x4a91aed33deb966617201a95404cf20bb34b86512d363db9bfc5ca2d20c34d4a",
+          "tx_status": "FINALIZED",
+          "seconds": 18.9,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires delivery of 'a working fix.' The primary runner passes all checks and the defect is closed, but the secondary runner fails. The rule does not define whether 'working' requires passing all runners, only primary, or tolerates pre-existing failures in untouched modules.",
+          "tx": "0xae6a5480ea9a1bd4bcc15c2883135138c87def115318b1b9f9dc68cf0d207711",
+          "tx_status": "FINALIZED",
+          "seconds": 12.8,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "The contributor delivered a fix that closes the reported defect and passes primary runner checks; the secondary runner failure occurred in an untouched module, indicating the fix itself is working.",
+          "tx": "0x942cc78a9a4eb54cc956e2653224d2650b9f5cf0eb5621bfac04d1e2d39aeeb9",
+          "tx_status": "FINALIZED",
+          "seconds": 9.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires 'a working fix', and the facts state the change closes the reported defect and passes the primary automated checks, while the secondary failure is in an untouched module. The rule does not specify how to handle such a conflicting secondary failure or require maintainer confirmation.",
+          "tx": "0x047d566b1d66e01435da193267d2a0146571b0802e2b2ba19e55ff7e912b4cad",
+          "tx_status": "FINALIZED",
+          "seconds": 14.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": ": The rule requires payment if the contributor delivers a \"working fix\". The facts establish that the contributor closed the reported defect and the only check failure occurred in a module the change did not touch, indicating the fix itself is functional and the failure is unrelated to the delivered work. Therefore, the contributor delivered a working fix.",
+          "tx": "0xbb66c0269cefe6703b9a329acb1d2623dc29ec21634332f05bc5605fcbdce62d",
+          "tx_status": "FINALIZED",
+          "seconds": 38.8,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule states to pay if the contributor delivers a working fix. The defect is closed and the primary runner, representing the main project checks, passes; the secondary runner fails in an untouched module, which does not undermine the fix's working status under the rule as written.",
+          "tx": "0x6f7444d47a1a0ee40aabed0b1e0daae043bbafd03af94409e27b8c974d24b35e",
+          "tx_status": "FINALIZED",
+          "seconds": 10.5,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 1,
+      "family": "conflicting_evidence"
+    },
+    {
+      "probe_id": "0x0d15c1c9db4961e468f04909a8880d49194c293cdfcfbc7518aa3aac6cb0bac7",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "channel": "PANEL",
+      "distribution": {
+        "ACCEPT": 1,
+        "INSUFFICIENT": 5
+      },
+      "divergence": 0.1667,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.1667,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 78,
+          "reason": "The rule pays if the contributor delivers a 'working fix'; the facts say the contributor's change 'closes the reported defect,' automated checks pass, and there is no specified tie‑breaker between conflicting maintainer opinions, so the only clear operative condition (defect fixed) is satisfied.",
+          "tx": "0xd3ffa362b4fd7decb00e667dc3d5b6620c85ec22d0e0ee14f922e8f70f3bb1b8",
+          "tx_status": "ACCEPTED",
+          "seconds": 9.7,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires delivery of 'a working fix.' The defect is closed and automated checks pass, but two maintainers have irreconcilable positions on whether the approach is correct. The rule does not specify how to resolve conflicting maintainer assessments of what constitutes a 'working' fix.",
+          "tx": "0xbe0265d01ef808fe1548cc1ccca8f911dae12d590c64417828e438267cef7eb5",
+          "tx_status": "FINALIZED",
+          "seconds": 9.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires a 'working fix', but the facts show a direct conflict between maintainers regarding whether the approach is correct, and the rule provides no mechanism to resolve such a disagreement.",
+          "tx": "0x6ae121d5e23c0b4c23fd169bc5b9da746547b4c139ae7054772121d3005b78ee",
+          "tx_status": "FINALIZED",
+          "seconds": 9.0,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires delivery of a 'working fix', but the facts present conflicting maintainer assessments without a tie-breaking mechanism specified in the rule.",
+          "tx": "0x321b713785b2ff2fc8b3dece7f645d0eedc08b3a48b8fa1199c03990d08d4e34",
+          "tx_status": "FINALIZED",
+          "seconds": 12.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires a 'working fix.' The facts show the contributor's change 'closes the reported defect' and 'automated checks all pass,' indicating functionality. However, there is a direct conflict between maintainer positions (one approved, one changes requested) with no tie-break mechanism specified in the rule to resolve whether the fix is accepted as 'working' when expert evaluators disagree.",
+          "tx": "0x5a4ce5e2e7d32286895ccc9c968baa14202ebe3d41eebb7813438c8f8a282b60",
+          "tx_status": "FINALIZED",
+          "seconds": 13.0,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires payment if the contributor delivers a working fix. The automated checks passed and the defect was closed, indicating the fix works; however, there is conflicting maintainer review without a tie-break mechanism provided in the rule, and the rule does not specify how to resolve disagreement. This creates ambiguity about what constitutes a 'working fix' when human judgment conflicts",
+          "tx": "0xbd9861b6ff66f9db1eff070d555d80c78ee8e7da5b5f0dc4d4f2e1e2a9a5cfc8",
+          "tx_status": "FINALIZED",
+          "seconds": 13.8,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 2,
+      "family": "conflicting_evidence"
+    },
+    {
+      "probe_id": "0xb606b9a143b1393e3770d74956280f9c3552714f53e1bde6c4f10e2875e5e7d3",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "channel": "PANEL",
+      "distribution": {
+        "ACCEPT": 6
+      },
+      "divergence": 0.0,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.0,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires payment if the contributor delivers a 'working fix'; the facts state the change was pushed before cutoff and all automated checks passed with no further modifications, so the fix worked when delivered.",
+          "tx": "0xa0b1d3c75df7d122b822f0ca866cefcd65feb8eccd62e0372f0f8e86ff5fa828",
+          "tx_status": "FINALIZED",
+          "seconds": 9.3,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires delivery of 'a working fix.' The facts establish the contributor pushed a change that passed all automated checks, demonstrating it works. The rule contains no deadline or timing requirement, and the delay in check completion was due to factors outside the contributor's control.",
+          "tx": "0x875cb342c0c0d7e807fd96090b307405e81a4ab883485f6852e56fece01fc659",
+          "tx_status": "FINALIZED",
+          "seconds": 8.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "The contributor delivered a working fix as evidenced by the passing checks, and the rule lacks a deadline or cutoff provision to disqualify a submission that passes after a specific time.",
+          "tx": "0x3d0918c624ca674c61902349ae83932d369d941ccd068db5ee759aa9f70a41ed",
+          "tx_status": "FINALIZED",
+          "seconds": 11.8,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires delivering a working fix; the facts show the change was delivered (pushed) and the automated checks all passed, confirming it was a working fix.",
+          "tx": "0xd98481bb7a27634428e268d688400aaebf9839b138cf6df96e534def4f9bde37",
+          "tx_status": "FINALIZED",
+          "seconds": 11.5,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule obligates payment when the contributor \"delivers a working fix,\" and the facts establish the contributor pushed the change, did not modify it afterward, and the checks passed, meaning a working fix was delivered; the rule states no deadline or check-completion timing requirement, so the delayed check results do not defeat the condition.",
+          "tx": "0xcd8c9f555fb98fea361c2a7adfe7c1f4b6e1d11999fcc3f83de3c5332213912d",
+          "tx_status": "FINALIZED",
+          "seconds": 50.5,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires payment if the contributor delivers a working fix. The change was pushed before the cutoff, no modifications were made after, and the checks passed, confirming a working fix. The delay in check completion was due to an unrelated backlog and does not negate the delivery of a working fix.",
+          "tx": "0xa49de9daddeab3b754ce7de7e30c4136ecd17a6e3b0d59d2f7fe6f36eb58c06c",
+          "tx_status": "FINALIZED",
+          "seconds": 10.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 3,
+      "family": "late_evidence"
+    },
+    {
+      "probe_id": "0x0fcb72b329e1a5286debdda68253224e32868e9c4e956d34eb2d45cb03d97d5d",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "channel": "PANEL",
+      "distribution": {
+        "INSUFFICIENT": 3,
+        "REJECT": 3
+      },
+      "divergence": 0.5,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.5,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 93,
+          "reason": "The rule requires payment only if the contributor delivers a \"working fix\"; since one documented reproduction path still reproduces the defect, the fix is not fully working under the rule as written.",
+          "tx": "0x0166f698f415126b625552328578f49e3c5bf8af6a2d6f1606b95d7173822119",
+          "tx_status": "FINALIZED",
+          "seconds": 16.8,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 2
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires delivery of 'a working fix' but does not define whether a fix must resolve all reproduction paths of a reported defect or only some. With one path still reproducing the defect, whether the fix qualifies as 'working' cannot be determined from the rule text alone.",
+          "tx": "0x666356ce85756c2d3b206229de55ca03f78ef209d6ed21340ed1e77d24377b92",
+          "tx_status": "FINALIZED",
+          "seconds": 10.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires a 'working fix', but the facts show the defect still reproduces via one of the two reported paths, making the fix incomplete according to the reported scope.",
+          "tx": "0x7b7620b66112fbbb028981f9d13672c8df253d063d3d7be1e79b71849f8cf014",
+          "tx_status": "FINALIZED",
+          "seconds": 9.1,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires 'a working fix' for the reported defect, but the facts show only one of two reproduction paths was fixed, with the second still reproducing.",
+          "tx": "0x608239667360d17efdada3f29b6a695def0cb14f89e539e1fc3904b27deab1ae",
+          "tx_status": "FINALIZED",
+          "seconds": 9.9,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": ": The rule requires delivery of \"a working fix,\" but does not define whether this means fixing all documented reproduction paths of a defect or if fixing a subset suffices when the contributor claims the remainder is a \"separate issue.\" Determining whether the obligation is satisfied requires a missing scope boundary ruling (evidence_absent: maintainer_ruling_on_scope) to establish if the still-re",
+          "tx": "0x69f4b8fd9881e64a8eb1b7b0bf1e4678d2a951667f93cd122b627d576a453025",
+          "tx_status": "FINALIZED",
+          "seconds": 48.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires a 'working fix' to entitle payment, but the facts show only one of two reproduction paths is fixed, and the defect still reproduces on the second path. The rule does not specify partial credit for incomplete fixes.",
+          "tx": "0x818e5e81193cfff15cab7004c833eda13a64c4a12aaded3e2dd366baace3416a",
+          "tx_status": "FINALIZED",
+          "seconds": 8.9,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 4,
+      "family": "partial_completion"
+    },
+    {
+      "probe_id": "0x23f6e7bdc9504ab67605e58d5d1c4108ccc30b0bd534049a30c51cb546333a04",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "channel": "PANEL",
+      "distribution": {
+        "INSUFFICIENT": 1,
+        "REJECT": 5
+      },
+      "divergence": 0.1667,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.1667,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 91,
+          "reason": "The rule pays only if the contributor delivers a \"working fix\"; disabling the feature where the defect occurred stops reproduction but is not described as a fix and leaves the feature absent rather than working, so the facts do not satisfy \"working fix.\"",
+          "tx": "0xe124728d4f32943e2393da12d641f378e747f3c582de5f65e71de2604eb6651e",
+          "tx_status": "FINALIZED",
+          "seconds": 8.9,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires 'a working fix' to be delivered. The contributor's change stops the defect from reproducing but does so by disabling a feature that was in use elsewhere without providing a replacement, which does not constitute a working fix—it trades one problem for another by breaking existing functionality.",
+          "tx": "0x5575338f9c334267dd75771ce96a10f1e0fcbb0e121c79b3528ec9e2d541e90a",
+          "tx_status": "FINALIZED",
+          "seconds": 12.9,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires a 'working fix', but the facts state the contributor simply disabled a feature that was in use elsewhere without providing a replacement, which constitutes a removal of functionality rather than a fix.",
+          "tx": "0x3839606094bc1788cffc4f454918c1c33c24c48286fd1cfeee60b77cba8c8d7c",
+          "tx_status": "ACCEPTED",
+          "seconds": 9.1,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires 'a working fix,' but the facts state the change 'makes the defect stop reproducing' by 'disabling the feature' that was 'in use by other parts of the project' with 'no replacement provided.' A fix that disables a needed feature without replacement does not constitute a 'working fix' as the term is commonly understood in software development, as it breaks functionality.",
+          "tx": "0x04fbcc0d6de639accf650d316c9826a7f044946641935e69a6adc87d91f6ab65",
+          "tx_status": "FINALIZED",
+          "seconds": 13.9,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule conditions payment on delivering a 'working fix', but does not supply a scope boundary for 'working' where the defect no longer reproduces yet the fix disables a feature in active use elsewhere without replacement, creating a conflict the rule does not resolve.",
+          "tx": "0xe3887cb8db60e296dc7befa725197a6635e4f3f6178cc22263554549b93fef73",
+          "tx_status": "FINALIZED",
+          "seconds": 111.5,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires a 'working fix,' but the evidence shows the defect was addressed by disabling the feature without providing a replacement, which does not constitute a working fix under the plain meaning of the term. The feature remains broken in practice, just non-functional rather than defective.",
+          "tx": "0xeb5aec107127bd44c14c1f0e892192b7ea33ec5603fdc08ce16c622eb05064b0",
+          "tx_status": "FINALIZED",
+          "seconds": 12.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 5,
+      "family": "partial_completion"
+    },
+    {
+      "probe_id": "0x2430fde68340302d453ea8fa3186b91c336dec0110ad6c100a6ef605859c2ae6",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "channel": "PANEL",
+      "distribution": {
+        "ACCEPT": 1,
+        "INSUFFICIENT": 5
+      },
+      "divergence": 0.1667,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.1667,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 88,
+          "reason": "The rule conditions payment on whether the contributor 'delivers a working fix', but the facts only say the change 'appears to close the reported defect' and give no definitive source of truth to determine if it actually works, so the rule does not determine an outcome on these facts.",
+          "tx": "0x5adc71271e092c5c38d00fd3182288e88ce05cce1d1239272f94eb55dd3e02d9",
+          "tx_status": "FINALIZED",
+          "seconds": 9.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires the contributor to 'deliver a working fix.' The facts show a change was submitted, but there is no evidence establishing whether the fix actually works—the defect does not reproduce locally for verification, no automated checks exist, and no maintainer has reviewed or tested the submission.",
+          "tx": "0xc70baa75f6acbde1aa7876c4b6eb31a5abcb09d5523c21b3c1b2907875de3d05",
+          "tx_status": "FINALIZED",
+          "seconds": 13.1,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires a 'working fix', but the facts state the 'defect reproduces locally: no', meaning the contributor could not verify the fix works, and there are no logs or reviews to confirm its functionality.",
+          "tx": "0xce9ae8746d1e6ecfd2c871df6a659be2c38379be3855e0668522240a5f6c44e1",
+          "tx_status": "FINALIZED",
+          "seconds": 9.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires delivery of a 'working fix', but the facts do not definitively establish whether the fix works, as there is no maintainer review or automated checks, and the local test shows the defect does not reproduce.",
+          "tx": "0x78061ab91c268ede7ef13b9db24678831aef036b292de4f4cc8173ce5fb030c3",
+          "tx_status": "FINALIZED",
+          "seconds": 13.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires payment if the contributor delivers a working fix; the facts show the change was submitted, contributor local test output is available, and the defect no longer reproduces locally, which together satisfy that a working fix was delivered.",
+          "tx": "0xcab15a47655ec298ba9293a2caf25404371e68faed70bd001957a53c8a0e2a52",
+          "tx_status": "FINALIZED",
+          "seconds": 101.0,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires a 'working fix' to trigger payment, but the facts state the defect does not reproduce locally, and there is no evidence of maintainer response or automated check logs to confirm the fix works; thus, it cannot be determined whether the fix is working under the rule's terms.",
+          "tx": "0x9527c417a0ad4a4537296b110a92708b6357a20c05b579be89d10ccdcb305c83",
+          "tx_status": "FINALIZED",
+          "seconds": 13.0,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 6,
+      "family": "missing_confirmation"
+    },
+    {
+      "probe_id": "0xda5794d38255d0991a2f113914ab525cbfd1823c845b1bac150827ce2d24c044",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "channel": "PANEL",
+      "distribution": {
+        "ACCEPT": 4,
+        "INSUFFICIENT": 2
+      },
+      "divergence": 0.3333,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.3333,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 94,
+          "reason": "The rule requires payment if the contributor delivers a \"working fix\"; the change reduces runtime from 40s to 9s, addressing the reported performance defect, and there is no requirement that performance match comparable operations or meet a specific target.",
+          "tx": "0xaecf284f69aaaafc1b49695136ff14bb773b3181cd0c8b9d7c246eda6aeb7ee8",
+          "tx_status": "FINALIZED",
+          "seconds": 8.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires delivery of 'a working fix.' The facts show the contributor reduced runtime from 40s to 9s, which is a substantial improvement. However, the rule does not define what constitutes 'a working fix' for a performance defect—whether any improvement suffices, whether the operation must meet unstated performance targets, or whether it must match comparable operations. Without these crit",
+          "tx": "0xd59d11a07bffdb4137e719576e37e22a961059211486fe6bd0d5ce564e60a701",
+          "tx_status": "FINALIZED",
+          "seconds": 12.7,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "The contributor delivered a fix that reduced runtime from 40s to 9s, satisfying the rule's requirement for a 'working fix' for the reported performance defect.",
+          "tx": "0x3c9d8da1a58b0b449338b99e93ca5e2e4fbcc654dd5617bba60dff275debfd58",
+          "tx_status": "FINALIZED",
+          "seconds": 10.1,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires a 'working fix', and the facts show a significant performance improvement (runtime reduced from 40s to 9s), which qualifies as a fix for the reported performance defect.",
+          "tx": "0x55dff7e762d53ad72c22be4cb4bc5f4d65c235aaac70f3325c08ba93174e76fc",
+          "tx_status": "FINALIZED",
+          "seconds": 9.5,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule requires determining whether the contributor delivered a 'working fix,' but the facts lack an acceptance threshold or defined criteria for what constitutes 'working' for this performance defect; the fix remains slower than comparable operations and the original report stated no target runtime, so applying the rule would require supplying a missing source of truth to resolve whether the pe",
+          "tx": "0x4cfc747027d5ebc72a6568e643c89e02e72faa6941f946b00c40c5a7ecf51b66",
+          "tx_status": "FINALIZED",
+          "seconds": 31.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule conditions payment on delivering a 'working fix,' and the evidence shows a performance defect was addressed with a significant runtime reduction from 40s to 9s, which constitutes a working improvement. The rule does not require meeting a target runtime or parity with comparable operations to qualify as a working fix.",
+          "tx": "0xb2198524a6e87104965f2ce3a9a2867ef2637328edacdafa74eb8f7ba336cccc",
+          "tx_status": "FINALIZED",
+          "seconds": 13.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 7,
+      "family": "criteria_gap"
+    }
+  ],
+  "disclaimer": "Split Score is an experimental measurement of panel divergence over a fixed probe set. It is not a probability that a dispute will occur, not a prediction of how a human court would rule, and not a judgment about whether the agreement is fair. Decidability is not fairness: a rule can be trivially easy to adjudicate and still be one-sided.",
+  "report_hash": "0x3892c0c0aa6103bd62262bab7f1e2da7907602e1184e562f44ef18d904d366f6"
+}

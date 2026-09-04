@@ -1,0 +1,10 @@
+label: v1
+title: Bounty payout on a working fix
+domain: open-source bounty / agentic contributor payment
+rule_text: |
+  Pay the contributor if the contributor delivers a working fix.
+notes: |
+  The unimproved rule. Names an obligation and a payment trigger, and specifies
+  nothing about who decides whether the fix works, which evidence governs, what
+  happens when evidence conflicts or is missing, when the deadline bites, or what
+  partial delivery earns.

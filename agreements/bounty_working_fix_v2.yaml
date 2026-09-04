@@ -1,0 +1,32 @@
+label: v2
+title: Bounty payout on a working fix (tightened)
+domain: open-source bounty / agentic contributor payment
+rule_text: |
+  Pay the contributor the full bounty if all of the following hold. (1) The
+  designated check suite named in the bounty listing reports every check passing on
+  the contributor's final commit; that suite is the sole authority on whether the
+  fix works, and no other runner, local result, or opinion overrides it. (2) The
+  suite reports no check failing that was passing on the parent commit; a newly
+  failing check anywhere in the suite defeats payment even if the reported defect is
+  closed. (3) Every reproduction path recorded on the issue at the time the bounty
+  was posted no longer reproduces the defect. If some but not all recorded
+  reproduction paths are resolved, pay the contributor that fraction of the bounty,
+  rounded down to the nearest whole unit. (4) The contributor's final commit was
+  pushed before the cutoff stated in the listing; the cutoff binds the push, not the
+  completion of the check suite, and delay caused by neither party does not defeat
+  payment. (5) Where the reported defect is that an operation is too slow, the
+  listing's stated numeric threshold governs; if the listing states no threshold,
+  this rule does not determine an outcome. If the designated check suite has not
+  reported within fourteen days of the push, and no maintainer has stated a
+  position, pay the full bounty.
+notes: |
+  Written against the eight counterexamples that ps_6ce467da9d20c1f2 found in v1.
+  Each clause exists because a specific probe split the panel: (1) and the override
+  language answer conflicting_evidence; (2) answers regression_after_fix; (3)
+  answers partial_completion; (4) answers late_evidence; (5) answers criteria_gap;
+  the fourteen-day fallback answers missing_confirmation.
+
+  Note what this rule deliberately does NOT do: it does not make the deal fairer.
+  Clause (2) is harsh, and clause (5) leaves a whole class of bounties
+  undecidable on purpose rather than inventing a threshold. Brightline measures
+  decidability, not fairness.

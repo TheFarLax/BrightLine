@@ -1,0 +1,1077 @@
+{
+  "schema": "brightline.report/1",
+  "rule": {
+    "schema": "brightline.spec/1",
+    "label": "v2",
+    "title": "Bounty payout on a working fix (tightened)",
+    "domain": "open-source bounty / agentic contributor payment",
+    "rule_text": "Pay the contributor the full bounty if all of the following hold. (1) The\ndesignated check suite named in the bounty listing reports every check passing on\nthe contributor's final commit; that suite is the sole authority on whether the\nfix works, and no other runner, local result, or opinion overrides it. (2) The\nsuite reports no check failing that was passing on the parent commit; a newly\nfailing check anywhere in the suite defeats payment even if the reported defect is\nclosed. (3) Every reproduction path recorded on the issue at the time the bounty\nwas posted no longer reproduces the defect. If some but not all recorded\nreproduction paths are resolved, pay the contributor that fraction of the bounty,\nrounded down to the nearest whole unit. (4) The contributor's final commit was\npushed before the cutoff stated in the listing; the cutoff binds the push, not the\ncompletion of the check suite, and delay caused by neither party does not defeat\npayment. (5) Where the reported defect is that an operation is too slow, the\nlisting's stated numeric threshold governs; if the listing states no threshold,\nthis rule does not determine an outcome. If the designated check suite has not\nreported within fourteen days of the push, and no maintainer has stated a\nposition, pay the full bounty.",
+    "normalized": "Pay the contributor the full bounty if all of the following hold. (1) The designated check suite named in the bounty listing reports every check passing on the contributor's final commit; that suite is the sole authority on whether the fix works, and no other runner, local result, or opinion overrides it. (2) The suite reports no check failing that was passing on the parent commit; a newly failing check anywhere in the suite defeats payment even if the reported defect is closed. (3) Every reproduction path recorded on the issue at the time the bounty was posted no longer reproduces the defect. If some but not all recorded reproduction paths are resolved, pay the contributor that fraction of the bounty, rounded down to the nearest whole unit. (4) The contributor's final commit was pushed before the cutoff stated in the listing; the cutoff binds the push, not the completion of the check suite, and delay caused by neither party does not defeat payment. (5) Where the reported defect is that an operation is too slow, the listing's stated numeric threshold governs; if the listing states no threshold, this rule does not determine an outcome. If the designated check suite has not reported within fourteen days of the push, and no maintainer has stated a position, pay the full bounty.",
+    "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+    "notes": "Written against the eight counterexamples that ps_6ce467da9d20c1f2 found in v1.\nEach clause exists because a specific probe split the panel: (1) and the override\nlanguage answer conflicting_evidence; (2) answers regression_after_fix; (3)\nanswers partial_completion; (4) answers late_evidence; (5) answers criteria_gap;\nthe fourteen-day fallback answers missing_confirmation.\nNote what this rule deliberately does NOT do: it does not make the deal fairer.\nClause (2) is harsh, and clause (5) leaves a whole class of bounties\nundecidable on purpose rather than inventing a threshold. Brightline measures\ndecidability, not fairness."
+  },
+  "provenance": {
+    "network": "studionet",
+    "contract_address": "0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7",
+    "runner_depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
+    "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+    "rule_label": "v2",
+    "probe_set_id": "ps_4a8062c5562c47a4",
+    "adversary_version": "adv-v1.0.0",
+    "adversary_prompt_hash": "0x08391c62bcae8c4105b4dadabb5af678c7607bdf56d06648d0ab2d4ebd5aa1a8",
+    "probe_generator": "authored",
+    "panel_models": [
+      "openai/gpt-5.1",
+      "anthropic/claude-sonnet-4.5",
+      "google/gemini-3-flash-preview",
+      "deepseek/deepseek-v3.2",
+      "moonshotai/kimi-k2.5",
+      "qwen/qwen3-235b-a22b-2507"
+    ],
+    "panel_size": 6,
+    "channel": "PANEL",
+    "wall_seconds": 6584.6,
+    "generated_at": "2026-09-04T10:46:05Z"
+  },
+  "metrics": {
+    "K": 2,
+    "N": 8,
+    "N_measurable": 8,
+    "tau": 0.2,
+    "split_mean": 0.0625,
+    "split_max": 0.25,
+    "noise_floor": 0.0,
+    "net_mean": 0.0625,
+    "unanimous_insufficient": 3,
+    "inconclusive_rate": 0.2083
+  },
+  "findings": [
+    {
+      "probe_id": "0x09a0e617e35ac3e09aef3bf11aa0440c41a35c426939977b7ed837fbc020e10d",
+      "index": 3,
+      "family": "regression_after_fix",
+      "divergence": 0.25,
+      "self_split_rate": 0.0,
+      "distribution": {
+        "ACCEPT": 3,
+        "REJECT": 1
+      },
+      "scenario": {
+        "narrative": "On the parent commit the designated suite had one check already failing for unrelated reasons. On the contributor's final commit that check still fails and every other check passes. The reported defect is closed.",
+        "facts": [
+          {
+            "k": "parent_commit_failing_checks",
+            "v": "1 (unrelated)"
+          },
+          {
+            "k": "final_commit_failing_checks",
+            "v": "same 1"
+          },
+          {
+            "k": "newly_failing_checks",
+            "v": "0"
+          },
+          {
+            "k": "reported_defect_closed",
+            "v": "yes"
+          }
+        ],
+        "evidence_available": [
+          "suite_log_parent",
+          "suite_log_final"
+        ],
+        "evidence_absent": []
+      },
+      "camps": {
+        "ACCEPT": [
+          {
+            "model": "openai/gpt-5.1",
+            "confidence": 92,
+            "reason": "Condition (1) is satisfied because, aside from one check that was already failing on the parent commit, every check on the designated suite passes on the contributor's final commit, and condition (2) is satisfied because there are 0 newly failing checks compared to the parent commit; no other rule condition is triggered by the given facts.",
+            "tx": "0x9e03e1a84009dabde05306807581e340066afb9dc410d70e19e58eb2bf167266"
+          },
+          {
+            "model": "deepseek/deepseek-v3.2",
+            "confidence": 95,
+            "reason": "Rule condition (2) requires that 'the suite reports no check failing that was passing on the parent commit'; the facts state there are 0 newly failing checks, so this condition is satisfied. Rule condition (1) is satisfied because the designated suite is the sole authority and reports every check passing on the final commit except the same one already failing on the parent.",
+            "tx": "0xc392956ae558dbc2740302633080cf2070968b70bef91cc752fd36ae18c55459"
+          },
+          {
+            "model": "qwen/qwen3-235b-a22b-2507",
+            "confidence": 95,
+            "reason": "The designated check suite reports no newly failing checks (satisfying condition 2) and every check relevant to the defect passes on the final commit, with only the same unrelated check failing as before. The defect is closed and no information suggests reproduction paths remain unresolved or the push was late. Condition 1 is met because the suite is the sole authority and reports no failure attri",
+            "tx": "0x77e285daf57a7b25725157065a066da3d8c0215cd74570e5b362f653fa10127a"
+          }
+        ],
+        "REJECT": [
+          {
+            "model": "google/gemini-3-flash-preview",
+            "confidence": 100,
+            "reason": "The rule requires every check to pass on the final commit, and since one check failed (even if it was already failing on the parent), the condition 'reports every check passing' is not met.",
+            "tx": "0xaeedcd54c8080769329bfcc0368735049fc490509fca0d7d279a661ec565b095"
+          }
+        ]
+      },
+      "missing_specification": [
+        "whether collateral breakage counts against performance",
+        "the scope boundary of the obligation"
+      ]
+    },
+    {
+      "probe_id": "0x0f5b933cc82553149d852d5ba5df84b8b59c5855ce3a19dca90f5dc155327ca1",
+      "index": 4,
+      "family": "late_evidence",
+      "divergence": 0.25,
+      "self_split_rate": 0.0,
+      "distribution": {
+        "INSUFFICIENT": 1,
+        "REJECT": 3
+      },
+      "scenario": {
+        "narrative": "The contributor pushed a commit before the cutoff, then pushed a second commit ninety minutes after the cutoff that only reformatted whitespace. The designated suite passed on the second commit and was never run on the first.",
+        "facts": [
+          {
+            "k": "first_push",
+            "v": "before cutoff"
+          },
+          {
+            "k": "second_push",
+            "v": "90 min after cutoff"
+          },
+          {
+            "k": "second_push_content",
+            "v": "whitespace only"
+          },
+          {
+            "k": "suite_ran_on",
+            "v": "second commit only"
+          },
+          {
+            "k": "suite_result",
+            "v": "all pass"
+          }
+        ],
+        "evidence_available": [
+          "both_push_timestamps",
+          "diff_between_commits",
+          "suite_log"
+        ],
+        "evidence_absent": [
+          "suite_result_for_first_commit"
+        ]
+      },
+      "camps": {
+        "INSUFFICIENT": [
+          {
+            "model": "openai/gpt-5.1",
+            "confidence": 93,
+            "reason": "The rule requires that the contributor's final commit be pushed before the cutoff, but here the final commit—the one on which the designated suite ran—was pushed ninety minutes after the cutoff, and the rule provides no tie‑breaker or exception for a later whitespace-only commit.",
+            "tx": "0xec4822a6e61c2cf4fd6e0f13ff9169808736fae62d376ded75a1fc37b886e75f"
+          }
+        ],
+        "REJECT": [
+          {
+            "model": "google/gemini-3-flash-preview",
+            "confidence": 90,
+            "reason": "The rule states the cutoff binds the push of the final commit, and the contributor's final commit was pushed after the cutoff. Additionally, the rule requires comparing the suite's results to the parent commit, but those results are absent.",
+            "tx": "0xc5f167b376aafc821dd6d27a8a88a0731d3061dc5768c081743ad154eba21311"
+          },
+          {
+            "model": "deepseek/deepseek-v3.2",
+            "confidence": 100,
+            "reason": "The rule requires the final commit to be pushed before the cutoff, and the facts state the final commit was pushed 90 minutes after the cutoff.",
+            "tx": "0x9b05e2405b86d01a8cabe90274359e97988ba0b4f776182a6cbbdf37100c2b51"
+          },
+          {
+            "model": "qwen/qwen3-235b-a22b-2507",
+            "confidence": 95,
+            "reason": "The rule requires that the designated check suite report every check passing on the contributor's final commit, but the suite was only run on the second commit, which was pushed after the cutoff. The final commit that could qualify is the first one, pushed before the cutoff, but there is no evidence the suite reported results for it, and the rule states the suite is the sole authority on whether t",
+            "tx": "0xb0068c0ddb8b4a56f3ba6b07f7d6cc4db44b7daa72430af24ead36083bad152e"
+          }
+        ]
+      },
+      "missing_specification": [
+        "whether the deadline binds the act or the confirmation of the act",
+        "the effect of delay caused by neither party"
+      ]
+    }
+  ],
+  "probes": [
+    {
+      "probe_id": "0x49cecb3cb5603ca23b33b921f704cbc9bc6eeaddfca04f13d14071d96a6305da",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "channel": "PANEL",
+      "distribution": {
+        "INSUFFICIENT": 6
+      },
+      "divergence": 0.0,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.0,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 88,
+          "reason": "The rule designates a single check suite as the sole authority but does not specify how to resolve conflicting results from repeated runs of that suite on the same commit, leaving no stated basis to choose one run over the other without adding a missing tie-break standard.",
+          "tx": "0xb49f072ffe722e26d041240eda2d4aaaf3b1819736ae1f2eb1e0a8a6be9a2e3e",
+          "tx_status": "ACCEPTED",
+          "seconds": 9.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule states 'the suite is the sole authority on whether the fix works' but does not specify which run is authoritative when the designated suite produces conflicting results on the same commit. The rule requires 'the designated check suite named in the bounty listing reports every check passing' but provides no tie-breaking mechanism when the same suite reports both passing and failing results",
+          "tx": "0xd0d41a39691c786c19dc8fcb7866e06f7cf6afbc76d248b4a1680bb6d8717459",
+          "tx_status": "FINALIZED",
+          "seconds": 26.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule states that the contributor is paid if the suite 'reports every check passing on the contributor's final commit', but it does not provide a tie-break or priority for conflicting reports from the same suite on the identical commit.",
+          "tx": "0x9580e0d0088feb04744188045f08558d7f47c15a1d03054bc95cbcbd9a6dcaca",
+          "tx_status": "FINALIZED",
+          "seconds": 9.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule states the designated check suite named in the bounty listing is the sole authority on whether the fix works, and no other runner, local result, or opinion overrides it. However, the facts present two conflicting suite runs on the same commit, and the rule does not provide a tie-break or specify which run is authoritative when multiple runs occur.",
+          "tx": "0xcb7b542e3d8280e1aa9096e53e6714600438559899bd12fd4f10172e59d34953",
+          "tx_status": "FINALIZED",
+          "seconds": 16.0,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": ": The rule designates \"the suite\" as the sole authority on whether the fix works, but the facts present two conflicting reports from that same suite on the identical commit—one reporting all checks passing and a later one reporting two checks failing. The rule does not specify whether the first run, last run, or any particular run governs when multiple runs conflict, and the facts explicitly state",
+          "tx": "0xf3cd314dd92d3a776e1bc83a2bf8a58164b2fc3da7ff4757654e72ce81b8f48f",
+          "tx_status": "FINALIZED",
+          "seconds": 27.9,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule designates the check suite named in the bounty listing as the sole authority on whether the fix works, but it does not resolve conflicting results from multiple runs of the same suite on the identical commit, nor does it specify which run is authoritative when results diverge without a repository change. Since the rule is silent on how to treat contradictory suite outcomes and does not de",
+          "tx": "0xed906f24ab938df549096841a17d6bd1d61943241211bf7b7acbee04f9af797c",
+          "tx_status": "FINALIZED",
+          "seconds": 13.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 0,
+      "family": "conflicting_evidence"
+    },
+    {
+      "probe_id": "0xb7429eea1edf0346a8a0a0392144cfef3339c1197352c233568479aeff4f5e0d",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "channel": "PANEL",
+      "distribution": {
+        "INSUFFICIENT": 6
+      },
+      "divergence": 0.0,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.0,
+      "n_valid": 6,
+      "n_inconclusive": 0,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 92,
+          "reason": "The rule conditions payment on the designated check suite’s report, but here that suite no longer exists and its result is absent; the fallback clause paying the full bounty after fourteen days explicitly depends on the designated suite not reporting, and only eleven days have passed, so the rule provides no outcome without supplying a new source of truth.",
+          "tx": "0xbc05d4c92ab480c8f6a991211216f358d4dc9597ccd499497e6afb4f9af5153e",
+          "tx_status": "FINALIZED",
+          "seconds": 9.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires the designated check suite named in the bounty listing to report passing checks, and makes it 'the sole authority.' The designated suite no longer exists and a replacement suite cannot satisfy the rule's requirement for the specifically designated suite. The fourteen-day fallback provision requires both that the designated suite has not reported AND that no maintainer has stated ",
+          "tx": "0x22b373b98d68f2fdb36ba10296688e967466be2e0754a0e91a678bed9c26b0c7",
+          "tx_status": "FINALIZED",
+          "seconds": 30.7,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "The rule states that the designated check suite is the 'sole authority' and no other runner overrides it; however, that suite has not reported a result and the fourteen-day waiting period for the default payment has not yet elapsed.",
+          "tx": "0x45019a6db2e3fe290f0e4841a7670f360f042dd64556879643123300017fdece",
+          "tx_status": "FINALIZED",
+          "seconds": 9.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 85,
+          "reason": "The rule requires the designated check suite's report, but it no longer exists and no maintainer statement is present; the 14-day fallback for unreported suites has not yet elapsed.",
+          "tx": "0x29d446653ac6f1bfacf8b881d81fc796260778d62b6ff2b5202033be7576074d",
+          "tx_status": "FINALIZED",
+          "seconds": 9.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "Conditions (1) and (2) require the designated suite—the 'sole authority'—to report, which it has not done, and the fallback clause paying the full bounty if the suite 'has not reported within fourteen days' is not yet satisfied because only eleven days have passed, leaving the rule's deadline effect undetermined.",
+          "tx": "0x8b63fcc09353e0869d7b7192b10c460e4843889f80d2d03c18a57eadc3be9673",
+          "tx_status": "FINALIZED",
+          "seconds": 354.3,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 2
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule designates the named check suite as the sole authority on whether the fix works, but that suite was removed and no result from it is available; the rule does not authorize substitution of a differently named suite, and without a result from the designated suite or a maintainer statement within fourteen days, the outcome cannot be determined by the rule.",
+          "tx": "0x25140fb122d51e1cbe2f88453564d765671e18ff92ff780698974b897ce6ceb8",
+          "tx_status": "FINALIZED",
+          "seconds": 10.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 1,
+      "family": "missing_confirmation"
+    },
+    {
+      "probe_id": "0x688f4f5daa144b12522e776951d59ceb62166ddcc9c1b4b21e85fcf2221c5da9",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "channel": "PANEL",
+      "distribution": {
+        "PARTIAL": 4
+      },
+      "divergence": 0.0,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.0,
+      "n_valid": 4,
+      "n_inconclusive": 2,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "The rule states that if some but not all recorded reproduction paths at posting are resolved, pay that fraction of the bounty; here, 3 paths were recorded at posting and 2 were resolved, so 2/3 of the bounty is due, and the later-added path is irrelevant under the rule.",
+          "tx": "0xa9e9915a35b83e77a39e2490fa4fe3ba323a766a806bf4e1ef213c4690f045a0",
+          "tx_status": "FINALIZED",
+          "seconds": 9.5,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "",
+          "confidence": 0,
+          "reason": "",
+          "tx": "0x2c434005b3889a4f3ea9e7db2f9ee620678e997ba2ce28910089f31bce80642e",
+          "tx_status": "CANCELED",
+          "seconds": 426.0,
+          "note": "no leader payload (status=CANCELED, result=NO_MAJORITY)",
+          "self_consistent": null,
+          "attempts": 3
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "The rule states if some but not all recorded reproduction paths are resolved, pay that fraction of the bounty; here 2 out of 3 paths recorded at the time of posting were resolved.",
+          "tx": "0xc5b4b9400ad9c8b326705a6ce8a8c056a4f48a2cde03c95ad24d89c35f849942",
+          "tx_status": "FINALIZED",
+          "seconds": 19.8,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires that every reproduction path recorded at the time of posting no longer reproduces; here, 3 were recorded and only 2 were resolved, so condition (3) is not fully satisfied, but the rule provides for partial payment based on the fraction of recorded paths resolved.",
+          "tx": "0xa1a30666d1cc2c81c6fcd713d03e6335205e7cbf000e28f8252116dec5189523",
+          "tx_status": "FINALIZED",
+          "seconds": 18.3,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "LLM_ERROR",
+          "confidence": 0,
+          "reason": "decision not in vocabulary: ",
+          "tx": "0x5f4e84d7cfa2ed97f30c51701c6caffbdb3292c2be093f16d1783b3a3a3c226a",
+          "tx_status": "FINALIZED",
+          "seconds": 142.0,
+          "note": "model produced no parseable decision",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule states that payment is based on the fraction of reproduction paths recorded at the time the bounty was posted that are resolved, and three paths were recorded then, with two resolved; thus, a fraction (2/3) of the paths are resolved, triggering partial credit. The path added after posting does not count under the rule.",
+          "tx": "0x500e1a4bdf1d0e9aca60f18299c02c07075a5cfbb43392af2ae57f30acd6b1c2",
+          "tx_status": "FINALIZED",
+          "seconds": 13.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 2,
+      "family": "partial_completion"
+    },
+    {
+      "probe_id": "0x09a0e617e35ac3e09aef3bf11aa0440c41a35c426939977b7ed837fbc020e10d",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "channel": "PANEL",
+      "distribution": {
+        "ACCEPT": 3,
+        "REJECT": 1
+      },
+      "divergence": 0.25,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.25,
+      "n_valid": 4,
+      "n_inconclusive": 2,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 92,
+          "reason": "Condition (1) is satisfied because, aside from one check that was already failing on the parent commit, every check on the designated suite passes on the contributor's final commit, and condition (2) is satisfied because there are 0 newly failing checks compared to the parent commit; no other rule condition is triggered by the given facts.",
+          "tx": "0x9e03e1a84009dabde05306807581e340066afb9dc410d70e19e58eb2bf167266",
+          "tx_status": "FINALIZED",
+          "seconds": 14.3,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "",
+          "confidence": 0,
+          "reason": "",
+          "tx": "0xf45b83fe2ef196c525baa8bbce0e2a8d118cfa23670026b36fd0b496c85b4c6a",
+          "tx_status": "CANCELED",
+          "seconds": 408.8,
+          "note": "no leader payload (status=CANCELED, result=NO_MAJORITY)",
+          "self_consistent": null,
+          "attempts": 3
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "The rule requires every check to pass on the final commit, and since one check failed (even if it was already failing on the parent), the condition 'reports every check passing' is not met.",
+          "tx": "0xaeedcd54c8080769329bfcc0368735049fc490509fca0d7d279a661ec565b095",
+          "tx_status": "FINALIZED",
+          "seconds": 9.5,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "Rule condition (2) requires that 'the suite reports no check failing that was passing on the parent commit'; the facts state there are 0 newly failing checks, so this condition is satisfied. Rule condition (1) is satisfied because the designated suite is the sole authority and reports every check passing on the final commit except the same one already failing on the parent.",
+          "tx": "0xc392956ae558dbc2740302633080cf2070968b70bef91cc752fd36ae18c55459",
+          "tx_status": "FINALIZED",
+          "seconds": 19.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "",
+          "confidence": 0,
+          "reason": "",
+          "tx": "",
+          "tx_status": "",
+          "seconds": 660.7,
+          "note": "failed after 3 attempts: GenLayerError: Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlayer.com', port=443): Max retries exceeded with url: /api (Caused by NameResolutionError(\"HTTPSConnection(host='studio.genlayer.com', por",
+          "self_consistent": null,
+          "attempts": 3
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The designated check suite reports no newly failing checks (satisfying condition 2) and every check relevant to the defect passes on the final commit, with only the same unrelated check failing as before. The defect is closed and no information suggests reproduction paths remain unresolved or the push was late. Condition 1 is met because the suite is the sole authority and reports no failure attri",
+          "tx": "0x77e285daf57a7b25725157065a066da3d8c0215cd74570e5b362f653fa10127a",
+          "tx_status": "FINALIZED",
+          "seconds": 48.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 3,
+      "family": "regression_after_fix"
+    },
+    {
+      "probe_id": "0x0f5b933cc82553149d852d5ba5df84b8b59c5855ce3a19dca90f5dc155327ca1",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "channel": "PANEL",
+      "distribution": {
+        "INSUFFICIENT": 1,
+        "REJECT": 3
+      },
+      "divergence": 0.25,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.25,
+      "n_valid": 4,
+      "n_inconclusive": 2,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 93,
+          "reason": "The rule requires that the contributor's final commit be pushed before the cutoff, but here the final commit—the one on which the designated suite ran—was pushed ninety minutes after the cutoff, and the rule provides no tie‑breaker or exception for a later whitespace-only commit.",
+          "tx": "0xec4822a6e61c2cf4fd6e0f13ff9169808736fae62d376ded75a1fc37b886e75f",
+          "tx_status": "FINALIZED",
+          "seconds": 10.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "",
+          "confidence": 0,
+          "reason": "",
+          "tx": "",
+          "tx_status": "",
+          "seconds": 458.2,
+          "note": "failed after 3 attempts: GenLayerError: Transaction 0x48ebf79c6da41893279e4b7b28c81647ef1367d722262f75a378c8831bc2cef5 did not reach desired status 'ACCEPTED' after 60 attempts (polling every 3000ms for a total of 180.0s). Last observed status: 'PROPOSING'. This ma",
+          "self_consistent": null,
+          "attempts": 3
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule states the cutoff binds the push of the final commit, and the contributor's final commit was pushed after the cutoff. Additionally, the rule requires comparing the suite's results to the parent commit, but those results are absent.",
+          "tx": "0xc5f167b376aafc821dd6d27a8a88a0731d3061dc5768c081743ad154eba21311",
+          "tx_status": "FINALIZED",
+          "seconds": 220.8,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "The rule requires the final commit to be pushed before the cutoff, and the facts state the final commit was pushed 90 minutes after the cutoff.",
+          "tx": "0x9b05e2405b86d01a8cabe90274359e97988ba0b4f776182a6cbbdf37100c2b51",
+          "tx_status": "FINALIZED",
+          "seconds": 117.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "LLM_ERROR",
+          "confidence": 0,
+          "reason": "decision not in vocabulary: ",
+          "tx": "0x0b013663ab17df5239345f65fcc17f1bbf27aef6cc52ca7061779c52c7845a59",
+          "tx_status": "FINALIZED",
+          "seconds": 121.6,
+          "note": "model produced no parseable decision",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "REJECT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires that the designated check suite report every check passing on the contributor's final commit, but the suite was only run on the second commit, which was pushed after the cutoff. The final commit that could qualify is the first one, pushed before the cutoff, but there is no evidence the suite reported results for it, and the rule states the suite is the sole authority on whether t",
+          "tx": "0xb0068c0ddb8b4a56f3ba6b07f7d6cc4db44b7daa72430af24ead36083bad152e",
+          "tx_status": "FINALIZED",
+          "seconds": 168.7,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 4,
+      "family": "late_evidence"
+    },
+    {
+      "probe_id": "0xf4bf8dd8ac74c4e3a6cc8c7b2c171ed160bab134bbf1f2d33f89bf2c5742948b",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "channel": "PANEL",
+      "distribution": {
+        "INSUFFICIENT": 5
+      },
+      "divergence": 0.0,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.0,
+      "n_valid": 5,
+      "n_inconclusive": 1,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 92,
+          "reason": "The rule states that where the reported defect is that an operation is too slow, the listing's stated numeric threshold governs, but it does not specify which machine that threshold applies to, creating a missing tie-break the rule does not resolve.",
+          "tx": "0x1b3bb1e6079a763ceb3cf772cac9cda2632c3a7f85d9930fcd9f01b056f14e72",
+          "tx_status": "FINALIZED",
+          "seconds": 314.3,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule states that 'where the reported defect is that an operation is too slow, the listing's stated numeric threshold governs; if the listing states no threshold, this rule does not determine an outcome.' The listing states a 10-second threshold but does not specify which machine or measurement environment that threshold applies to, creating an ambiguity the rule does not resolve.",
+          "tx": "0xe7a63104669ecda028943d4fef9c45d393f24acc98827488ff1be803b416985e",
+          "tx_status": "FINALIZED",
+          "seconds": 157.9,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 90,
+          "reason": "The rule states that where an operation is too slow, 'the listing's stated numeric threshold governs', but the facts indicate the listing failed to specify which machine (reference vs. reporter) the threshold applies to, leaving the outcome undetermined by the rule text.",
+          "tx": "0x615715c57b613c160a57a78d29785ae5aac4ab6ebe4781c9338ae230c9dee17f",
+          "tx_status": "FINALIZED",
+          "seconds": 100.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule states 'the listing's stated numeric threshold governs' but the listing did not specify which machine's measurement applies, leaving no authoritative source to determine whether the threshold is met.",
+          "tx": "0x5432ed9f45a157dd5ebc69b5d376d2e1463a259aafb7357730120c23812ab151",
+          "tx_status": "FINALIZED",
+          "seconds": 20.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "LLM_ERROR",
+          "confidence": 0,
+          "reason": "decision not in vocabulary: ",
+          "tx": "0x9037c5931245b658febebecb57b1b6f27f2bb6d5fe73f4c46acf0fab92586d96",
+          "tx_status": "FINALIZED",
+          "seconds": 281.0,
+          "note": "model produced no parseable decision",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "INSUFFICIENT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires a stated numeric threshold to govern when the defect is about slowness, but it does not resolve ambiguity about which machine's measurement applies when the listing does not specify. Since the listing did not specify the machine to which the 10s threshold applies, and the rule provides no tie-breaker for conflicting measurements, the source of truth for evaluating performance is ",
+          "tx": "0x33b0e5fdfa62c30528fd03f07bffb8b9bed859039fb64f3a30891d775c36f1e8",
+          "tx_status": "FINALIZED",
+          "seconds": 11.9,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 5,
+      "family": "criteria_gap"
+    },
+    {
+      "probe_id": "0xa01d1deb7f27405596177a24578a9e1f713ab4d49ebead339f5e2350ed8e2e4d",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "channel": "PANEL",
+      "distribution": {
+        "ACCEPT": 4
+      },
+      "divergence": 0.0,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.0,
+      "n_valid": 4,
+      "n_inconclusive": 2,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 97,
+          "reason": "The rule makes the designated check suite 'the sole authority' on whether the fix works, requires that all checks pass and no new failures appear, and that all recorded reproduction paths no longer reproduce the defect; maintainer opinions are explicitly not controlling, and all stated conditions for full payment are satisfied.",
+          "tx": "0x8f8c17c9b74bbe8d40c3bf36e545950e6cb383d7145762f1b1f74b840ea64d45",
+          "tx_status": "FINALIZED",
+          "seconds": 15.4,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "",
+          "confidence": 0,
+          "reason": "",
+          "tx": "0xc8892db93b5d2788a198ab6ec296b2ff6cafba955b15cfceaf7da41ba61875a9",
+          "tx_status": "CANCELED",
+          "seconds": 558.9,
+          "note": "no leader payload (status=CANCELED, result=NO_MAJORITY)",
+          "self_consistent": null,
+          "attempts": 3
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "The rule states the designated check suite is the 'sole authority' and that 'no other runner, local result, or opinion overrides it.' Since the suite reports all checks passing and the defect no longer reproduces, the criteria for full payment are met regardless of the maintainer's opinion.",
+          "tx": "0x3d1af651522ca346cd2c1cc4bbd3dec9d4d0c31dc3ff1305acf4276e426c1199",
+          "tx_status": "FINALIZED",
+          "seconds": 20.7,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule states the designated check suite is the sole authority on whether the fix works, and no other runner, local result, or opinion overrides it. The facts confirm the suite reports all checks passing and the defect no longer reproduces, satisfying conditions (1) and (3).",
+          "tx": "0x6a708e6ba1b0e821a9272ac45e3496b3239a2603b50f701de021e9aeb28e1c0d",
+          "tx_status": "ACCEPTED",
+          "seconds": 14.1,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "",
+          "confidence": 0,
+          "reason": "",
+          "tx": "",
+          "tx_status": "",
+          "seconds": 630.3,
+          "note": "failed after 3 attempts: GenLayerError: Request to https://studio.genlayer.com/api failed: HTTPSConnectionPool(host='studio.genlayer.com', port=443): Max retries exceeded with url: /api (Caused by NameResolutionError(\"HTTPSConnection(host='studio.genlayer.com', por",
+          "self_consistent": null,
+          "attempts": 3
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "ACCEPT",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The designated check suite reports all checks passing, and the defect no longer reproduces, satisfying conditions (1) and (3). The maintainer's opinion that the change is wrong and should not be paid does not override the suite's authority per condition (1), and the change has not been reverted. No failing checks were introduced, and there is no indication the push was after the cutoff. The rule e",
+          "tx": "0xd824e16ad305e79d57730a2c4a9991869455982b5ed69665c0022194e01668e7",
+          "tx_status": "ACCEPTED",
+          "seconds": 508.2,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 3
+        }
+      ],
+      "raw": {},
+      "index": 6,
+      "family": "conflicting_evidence"
+    },
+    {
+      "probe_id": "0xf267a2d8b2998e0e1b4801e2d8c91c7c2ed75b2d1b535a86782ed2db121595e3",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "channel": "PANEL",
+      "distribution": {
+        "PARTIAL": 5
+      },
+      "divergence": 0.0,
+      "vote_divergence": 0.0,
+      "self_split_rate": 0.0,
+      "net_divergence": 0.0,
+      "n_valid": 5,
+      "n_inconclusive": 1,
+      "observations": [
+        {
+          "label": "openai/gpt-5.1@default",
+          "model": "openai/gpt-5.1",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 96,
+          "reason": "Condition (3) requires that \"Every reproduction path recorded on the issue at the time the bounty was posted no longer reproduces the defect,\" and specifies that if only some paths are resolved, \"pay the contributor that fraction of the bounty\"; here 1 of 2 recorded paths is resolved, so the rule provides for partial payment. Conditions (1) and (2) are satisfied because the designated check suite ",
+          "tx": "0xd0ee3004fec71b814bdeeb8f3a3aaeb1e2edb331ef2e6d4b122fdcd5d4e0d5a0",
+          "tx_status": "FINALIZED",
+          "seconds": 9.1,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "anthropic/claude-sonnet-4.5@default",
+          "model": "anthropic/claude-sonnet-4.5",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires at condition (3) that 'Every reproduction path recorded on the issue at the time the bounty was posted no longer reproduces the defect.' Two paths were recorded, but only one is fully resolved while the second path is 'still reachable under load,' meaning it still reproduces the defect. The rule provides for partial payment only when 'some but not all recorded reproduction paths ",
+          "tx": "0x73f96048370f4bcca6c9e74428a5a25235ec5b1dcfc6ec0f102863fc207f0007",
+          "tx_status": "FINALIZED",
+          "seconds": 426.1,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 3
+        },
+        {
+          "label": "google/gemini-3-flash-preview@default",
+          "model": "google/gemini-3-flash-preview",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 100,
+          "reason": "Rule (3) states if some but not all recorded reproduction paths are resolved, the contributor is paid that fraction of the bounty. Here, 1 out of 2 paths was resolved.",
+          "tx": "0x0078613c2d1516b1b41626790a620bdfbdd1a30ec2c732abebe1a50465c9bea3",
+          "tx_status": "FINALIZED",
+          "seconds": 9.7,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "deepseek/deepseek-v3.2@default",
+          "model": "deepseek/deepseek-v3.2",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule requires every reproduction path recorded to no longer reproduce the defect, and here only one of two paths is fully resolved, while the second is still reachable under load.",
+          "tx": "0x778215a9e8d455f3acf308c645d8590c4e7df53bda9c1b9ef1e949693d8cca9e",
+          "tx_status": "FINALIZED",
+          "seconds": 9.8,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "moonshotai/kimi-k2.5@default",
+          "model": "moonshotai/kimi-k2.5",
+          "kind": "INCONCLUSIVE",
+          "decision": "",
+          "status": "LLM_ERROR",
+          "confidence": 0,
+          "reason": "decision not in vocabulary: ",
+          "tx": "0x855d6835416052ae265e8b2531a8251684e03ee26409a9fff811215e8c925bda",
+          "tx_status": "FINALIZED",
+          "seconds": 69.7,
+          "note": "model produced no parseable decision",
+          "self_consistent": true,
+          "attempts": 1
+        },
+        {
+          "label": "qwen/qwen3-235b-a22b-2507@default",
+          "model": "qwen/qwen3-235b-a22b-2507",
+          "kind": "AGREE",
+          "decision": "PARTIAL",
+          "status": "OK",
+          "confidence": 95,
+          "reason": "The rule states that payment is due for the fraction of reproduction paths resolved, rounded down, if some but not all paths are resolved. Here, 1 of 2 recorded paths is resolved, triggering partial payment under condition (3).",
+          "tx": "0x30b763da7d7d372cb43e228ef17d5ad637bcb983dfd421887be9d309a0e2a527",
+          "tx_status": "FINALIZED",
+          "seconds": 13.6,
+          "note": "result=MAJORITY_AGREE",
+          "self_consistent": true,
+          "attempts": 1
+        }
+      ],
+      "raw": {},
+      "index": 7,
+      "family": "partial_completion"
+    }
+  ],
+  "disclaimer": "Split Score is an experimental measurement of panel divergence over a fixed probe set. It is not a probability that a dispute will occur, not a prediction of how a human court would rule, and not a judgment about whether the agreement is fair. Decidability is not fairness: a rule can be trivially easy to adjudicate and still be one-sided.",
+  "report_hash": "0xdd07536a1b8d293177a517c944919eb9d0d21eba715b1a4212f45007ac55b769"
+}

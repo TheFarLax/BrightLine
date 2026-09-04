@@ -1,0 +1,337 @@
+{
+  "schema": "brightline.probeset/1",
+  "probe_set_id": "ps_6ce467da9d20c1f2",
+  "generated_from": {
+    "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+    "rule_label": "v1",
+    "adversary_version": "adv-v1.0.0",
+    "adversary_prompt_hash": "0x08391c62bcae8c4105b4dadabb5af678c7607bdf56d06648d0ab2d4ebd5aa1a8",
+    "generator": "authored",
+    "generator_model": "claude-opus-5",
+    "corpus": "working_fix",
+    "salt": "0x01",
+    "seed": "0x91f6df83f0ad4288a59981a3daca20f7359e287e9fab23b88292646f2e83db88"
+  },
+  "n_probes": 8,
+  "family_quota": {
+    "regression_after_fix": 1,
+    "conflicting_evidence": 2,
+    "late_evidence": 1,
+    "partial_completion": 2,
+    "missing_confirmation": 1,
+    "criteria_gap": 1
+  },
+  "family_counts": {
+    "conflicting_evidence": 2,
+    "criteria_gap": 1,
+    "late_evidence": 1,
+    "missing_confirmation": 1,
+    "partial_completion": 2,
+    "regression_after_fix": 1
+  },
+  "probes": [
+    {
+      "index": 0,
+      "family": "regression_after_fix",
+      "probe_id": "0xef8b49b9341a9090daa21d17ab2ebd4475e9e523de92aa14f18ec0a1680e4c6e",
+      "scenario": {
+        "narrative": "The contributor submitted a change that closes the reported defect. After the change was merged, a defect that had been closed five weeks earlier began reproducing again in the same module. No other behaviour changed.",
+        "facts": [
+          {
+            "k": "reported_defect_closed",
+            "v": "yes"
+          },
+          {
+            "k": "previously_closed_defect_reproducing",
+            "v": "yes"
+          },
+          {
+            "k": "same_module",
+            "v": "yes"
+          },
+          {
+            "k": "submitted_before_deadline",
+            "v": "yes"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "issue_history",
+          "reproduction_log"
+        ],
+        "evidence_absent": []
+      },
+      "canonical": "{\"evidence_absent\":[],\"evidence_available\":[\"diff\",\"issue_history\",\"reproduction_log\"],\"facts\":[{\"k\":\"reported_defect_closed\",\"v\":\"yes\"},{\"k\":\"previously_closed_defect_reproducing\",\"v\":\"yes\"},{\"k\":\"same_module\",\"v\":\"yes\"},{\"k\":\"submitted_before_deadline\",\"v\":\"yes\"}],\"narrative\":\"The contributor submitted a change that closes the reported defect. After the change was merged, a defect that had been closed five weeks earlier began reproducing again in the same module. No other behaviour changed.\"}"
+    },
+    {
+      "index": 1,
+      "family": "conflicting_evidence",
+      "probe_id": "0x58dfbfc255ff91d681615919edf9066f41cb2bcb3ca2ede1e4c31947a9a48a4a",
+      "scenario": {
+        "narrative": "The change closes the reported defect. Automated checks on the project's primary runner report every check passing. Automated checks on the project's secondary runner report one failure, in a module the change did not touch. The maintainer has not commented.",
+        "facts": [
+          {
+            "k": "reported_defect_closed",
+            "v": "yes"
+          },
+          {
+            "k": "checks_primary_runner",
+            "v": "pass"
+          },
+          {
+            "k": "checks_secondary_runner",
+            "v": "fail (untouched module)"
+          },
+          {
+            "k": "maintainer_confirmation",
+            "v": "none"
+          },
+          {
+            "k": "submitted_before_deadline",
+            "v": "yes"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "primary_runner_log",
+          "secondary_runner_log"
+        ],
+        "evidence_absent": [
+          "maintainer_statement"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"maintainer_statement\"],\"evidence_available\":[\"diff\",\"primary_runner_log\",\"secondary_runner_log\"],\"facts\":[{\"k\":\"reported_defect_closed\",\"v\":\"yes\"},{\"k\":\"checks_primary_runner\",\"v\":\"pass\"},{\"k\":\"checks_secondary_runner\",\"v\":\"fail (untouched module)\"},{\"k\":\"maintainer_confirmation\",\"v\":\"none\"},{\"k\":\"submitted_before_deadline\",\"v\":\"yes\"}],\"narrative\":\"The change closes the reported defect. Automated checks on the project's primary runner report every check passing. Automated checks on the project's secondary runner report one failure, in a module the change did not touch. The maintainer has not commented.\"}"
+    },
+    {
+      "index": 2,
+      "family": "conflicting_evidence",
+      "probe_id": "0x0d15c1c9db4961e468f04909a8880d49194c293cdfcfbc7518aa3aac6cb0bac7",
+      "scenario": {
+        "narrative": "The contributor's change closes the reported defect. One maintainer wrote that the approach is correct and approved it. A second maintainer wrote that the approach is wrong and requested changes. Automated checks all pass. Neither maintainer withdrew their position.",
+        "facts": [
+          {
+            "k": "reported_defect_closed",
+            "v": "yes"
+          },
+          {
+            "k": "maintainer_a_position",
+            "v": "approved"
+          },
+          {
+            "k": "maintainer_b_position",
+            "v": "changes requested"
+          },
+          {
+            "k": "automated_checks",
+            "v": "pass"
+          },
+          {
+            "k": "positions_withdrawn",
+            "v": "no"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "review_comments",
+          "check_logs"
+        ],
+        "evidence_absent": [
+          "tie_break_decision"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"tie_break_decision\"],\"evidence_available\":[\"diff\",\"review_comments\",\"check_logs\"],\"facts\":[{\"k\":\"reported_defect_closed\",\"v\":\"yes\"},{\"k\":\"maintainer_a_position\",\"v\":\"approved\"},{\"k\":\"maintainer_b_position\",\"v\":\"changes requested\"},{\"k\":\"automated_checks\",\"v\":\"pass\"},{\"k\":\"positions_withdrawn\",\"v\":\"no\"}],\"narrative\":\"The contributor's change closes the reported defect. One maintainer wrote that the approach is correct and approved it. A second maintainer wrote that the approach is wrong and requested changes. Automated checks all pass. Neither maintainer withdrew their position.\"}"
+    },
+    {
+      "index": 3,
+      "family": "late_evidence",
+      "probe_id": "0xb606b9a143b1393e3770d74956280f9c3552714f53e1bde6c4f10e2875e5e7d3",
+      "scenario": {
+        "narrative": "The contributor pushed the change eleven hours before the stated cutoff. The project's automated checks were queued behind unrelated work and reported all passing three hours after the cutoff. Nothing about the change was modified after the push.",
+        "facts": [
+          {
+            "k": "change_pushed_before_cutoff",
+            "v": "yes (11h before)"
+          },
+          {
+            "k": "checks_completed",
+            "v": "3h after cutoff"
+          },
+          {
+            "k": "checks_result",
+            "v": "pass"
+          },
+          {
+            "k": "change_modified_after_push",
+            "v": "no"
+          },
+          {
+            "k": "delay_cause",
+            "v": "unrelated queue backlog"
+          }
+        ],
+        "evidence_available": [
+          "push_timestamp",
+          "check_completion_timestamp",
+          "check_logs"
+        ],
+        "evidence_absent": []
+      },
+      "canonical": "{\"evidence_absent\":[],\"evidence_available\":[\"push_timestamp\",\"check_completion_timestamp\",\"check_logs\"],\"facts\":[{\"k\":\"change_pushed_before_cutoff\",\"v\":\"yes (11h before)\"},{\"k\":\"checks_completed\",\"v\":\"3h after cutoff\"},{\"k\":\"checks_result\",\"v\":\"pass\"},{\"k\":\"change_modified_after_push\",\"v\":\"no\"},{\"k\":\"delay_cause\",\"v\":\"unrelated queue backlog\"}],\"narrative\":\"The contributor pushed the change eleven hours before the stated cutoff. The project's automated checks were queued behind unrelated work and reported all passing three hours after the cutoff. Nothing about the change was modified after the push.\"}"
+    },
+    {
+      "index": 4,
+      "family": "partial_completion",
+      "probe_id": "0x0fcb72b329e1a5286debdda68253224e32868e9c4e956d34eb2d45cb03d97d5d",
+      "scenario": {
+        "narrative": "The reported defect had two documented reproduction paths. The contributor's change eliminates the first path entirely. The second path still reproduces the defect. The contributor stated they consider the remaining path a separate issue.",
+        "facts": [
+          {
+            "k": "reproduction_paths_reported",
+            "v": "2"
+          },
+          {
+            "k": "paths_fixed",
+            "v": "1"
+          },
+          {
+            "k": "paths_still_reproducing",
+            "v": "1"
+          },
+          {
+            "k": "contributor_position",
+            "v": "remaining path is a separate issue"
+          },
+          {
+            "k": "automated_checks",
+            "v": "pass"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "reproduction_logs_both_paths"
+        ],
+        "evidence_absent": [
+          "maintainer_ruling_on_scope"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"maintainer_ruling_on_scope\"],\"evidence_available\":[\"diff\",\"reproduction_logs_both_paths\"],\"facts\":[{\"k\":\"reproduction_paths_reported\",\"v\":\"2\"},{\"k\":\"paths_fixed\",\"v\":\"1\"},{\"k\":\"paths_still_reproducing\",\"v\":\"1\"},{\"k\":\"contributor_position\",\"v\":\"remaining path is a separate issue\"},{\"k\":\"automated_checks\",\"v\":\"pass\"}],\"narrative\":\"The reported defect had two documented reproduction paths. The contributor's change eliminates the first path entirely. The second path still reproduces the defect. The contributor stated they consider the remaining path a separate issue.\"}"
+    },
+    {
+      "index": 5,
+      "family": "partial_completion",
+      "probe_id": "0x23f6e7bdc9504ab67605e58d5d1c4108ccc30b0bd534049a30c51cb546333a04",
+      "scenario": {
+        "narrative": "The contributor's change makes the defect stop reproducing, but does so by disabling the feature in which the defect occurred. The feature was in use by other parts of the project. No replacement was provided.",
+        "facts": [
+          {
+            "k": "defect_reproduces",
+            "v": "no"
+          },
+          {
+            "k": "method",
+            "v": "feature disabled"
+          },
+          {
+            "k": "feature_in_use_elsewhere",
+            "v": "yes"
+          },
+          {
+            "k": "replacement_provided",
+            "v": "no"
+          },
+          {
+            "k": "automated_checks",
+            "v": "pass"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "usage_search_results",
+          "check_logs"
+        ],
+        "evidence_absent": [
+          "maintainer_statement"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"maintainer_statement\"],\"evidence_available\":[\"diff\",\"usage_search_results\",\"check_logs\"],\"facts\":[{\"k\":\"defect_reproduces\",\"v\":\"no\"},{\"k\":\"method\",\"v\":\"feature disabled\"},{\"k\":\"feature_in_use_elsewhere\",\"v\":\"yes\"},{\"k\":\"replacement_provided\",\"v\":\"no\"},{\"k\":\"automated_checks\",\"v\":\"pass\"}],\"narrative\":\"The contributor's change makes the defect stop reproducing, but does so by disabling the feature in which the defect occurred. The feature was in use by other parts of the project. No replacement was provided.\"}"
+    },
+    {
+      "index": 6,
+      "family": "missing_confirmation",
+      "probe_id": "0x2430fde68340302d453ea8fa3186b91c336dec0110ad6c100a6ef605859c2ae6",
+      "scenario": {
+        "narrative": "The contributor submitted a change that appears to close the reported defect. The project has no automated checks. Nobody has reviewed or commented on the change in nineteen days. The contributor has asked twice for a review.",
+        "facts": [
+          {
+            "k": "change_submitted",
+            "v": "yes"
+          },
+          {
+            "k": "automated_checks_exist",
+            "v": "no"
+          },
+          {
+            "k": "days_without_review",
+            "v": "19"
+          },
+          {
+            "k": "review_requested_by_contributor",
+            "v": "twice"
+          },
+          {
+            "k": "defect_reproduces_locally",
+            "v": "no"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "contributor_local_test_output"
+        ],
+        "evidence_absent": [
+          "any_maintainer_response",
+          "automated_check_logs"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"any_maintainer_response\",\"automated_check_logs\"],\"evidence_available\":[\"diff\",\"contributor_local_test_output\"],\"facts\":[{\"k\":\"change_submitted\",\"v\":\"yes\"},{\"k\":\"automated_checks_exist\",\"v\":\"no\"},{\"k\":\"days_without_review\",\"v\":\"19\"},{\"k\":\"review_requested_by_contributor\",\"v\":\"twice\"},{\"k\":\"defect_reproduces_locally\",\"v\":\"no\"}],\"narrative\":\"The contributor submitted a change that appears to close the reported defect. The project has no automated checks. Nobody has reviewed or commented on the change in nineteen days. The contributor has asked twice for a review.\"}"
+    },
+    {
+      "index": 7,
+      "family": "criteria_gap",
+      "probe_id": "0xda5794d38255d0991a2f113914ab525cbfd1823c845b1bac150827ce2d24c044",
+      "scenario": {
+        "narrative": "The reported defect is that an operation is unacceptably slow. The contributor's change reduces the operation's runtime from 40 seconds to 9 seconds. The original report did not state a target runtime. The operation still takes longer than comparable operations in the project.",
+        "facts": [
+          {
+            "k": "defect_type",
+            "v": "performance"
+          },
+          {
+            "k": "runtime_before",
+            "v": "40s"
+          },
+          {
+            "k": "runtime_after",
+            "v": "9s"
+          },
+          {
+            "k": "target_runtime_stated",
+            "v": "no"
+          },
+          {
+            "k": "slower_than_comparable_operations",
+            "v": "yes"
+          }
+        ],
+        "evidence_available": [
+          "diff",
+          "benchmark_before",
+          "benchmark_after"
+        ],
+        "evidence_absent": [
+          "acceptance_threshold"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"acceptance_threshold\"],\"evidence_available\":[\"diff\",\"benchmark_before\",\"benchmark_after\"],\"facts\":[{\"k\":\"defect_type\",\"v\":\"performance\"},{\"k\":\"runtime_before\",\"v\":\"40s\"},{\"k\":\"runtime_after\",\"v\":\"9s\"},{\"k\":\"target_runtime_stated\",\"v\":\"no\"},{\"k\":\"slower_than_comparable_operations\",\"v\":\"yes\"}],\"narrative\":\"The reported defect is that an operation is unacceptably slow. The contributor's change reduces the operation's runtime from 40 seconds to 9 seconds. The original report did not state a target runtime. The operation still takes longer than comparable operations in the project.\"}"
+    }
+  ]
+}

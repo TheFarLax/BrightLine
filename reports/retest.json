@@ -1,0 +1,168 @@
+{
+  "schema": "brightline.diff/1",
+  "probe_set_frozen": "ps_6ce467da9d20c1f2",
+  "rule_before": {
+    "label": "v1",
+    "hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+    "K": 4,
+    "N": 8,
+    "split_mean": 0.3125,
+    "inconclusive_rate": 0.0
+  },
+  "rule_after": {
+    "label": "v2",
+    "hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+    "K": 4,
+    "N": 8,
+    "split_mean": 0.225,
+    "inconclusive_rate": 0.0833
+  },
+  "regression": {
+    "closed": 2,
+    "opened": 2,
+    "still_split": 2,
+    "rows": [
+      {
+        "probe_id": "0xef8b49b9341a9090daa21d17ab2ebd4475e9e523de92aa14f18ec0a1680e4c6e",
+        "index": 0,
+        "family": "regression_after_fix",
+        "before": 0.6667,
+        "after": 0.5,
+        "before_dist": {
+          "ACCEPT": 2,
+          "INSUFFICIENT": 2,
+          "REJECT": 2
+        },
+        "after_dist": {
+          "INSUFFICIENT": 3,
+          "REJECT": 3
+        },
+        "state": "still split"
+      },
+      {
+        "probe_id": "0x58dfbfc255ff91d681615919edf9066f41cb2bcb3ca2ede1e4c31947a9a48a4a",
+        "index": 1,
+        "family": "conflicting_evidence",
+        "before": 0.5,
+        "after": 0.4,
+        "before_dist": {
+          "ACCEPT": 3,
+          "INSUFFICIENT": 3
+        },
+        "after_dist": {
+          "ACCEPT": 2,
+          "INSUFFICIENT": 3
+        },
+        "state": "still split"
+      },
+      {
+        "probe_id": "0x0d15c1c9db4961e468f04909a8880d49194c293cdfcfbc7518aa3aac6cb0bac7",
+        "index": 2,
+        "family": "conflicting_evidence",
+        "before": 0.1667,
+        "after": 0.3333,
+        "before_dist": {
+          "ACCEPT": 1,
+          "INSUFFICIENT": 5
+        },
+        "after_dist": {
+          "ACCEPT": 2,
+          "INSUFFICIENT": 4
+        },
+        "state": "opened"
+      },
+      {
+        "probe_id": "0xb606b9a143b1393e3770d74956280f9c3552714f53e1bde6c4f10e2875e5e7d3",
+        "index": 3,
+        "family": "late_evidence",
+        "before": 0.0,
+        "after": 0.0,
+        "before_dist": {
+          "ACCEPT": 6
+        },
+        "after_dist": {
+          "ACCEPT": 5
+        },
+        "state": "clean"
+      },
+      {
+        "probe_id": "0x0fcb72b329e1a5286debdda68253224e32868e9c4e956d34eb2d45cb03d97d5d",
+        "index": 4,
+        "family": "partial_completion",
+        "before": 0.5,
+        "after": 0.0,
+        "before_dist": {
+          "INSUFFICIENT": 3,
+          "REJECT": 3
+        },
+        "after_dist": {
+          "PARTIAL": 5
+        },
+        "state": "closed"
+      },
+      {
+        "probe_id": "0x23f6e7bdc9504ab67605e58d5d1c4108ccc30b0bd534049a30c51cb546333a04",
+        "index": 5,
+        "family": "partial_completion",
+        "before": 0.1667,
+        "after": 0.4,
+        "before_dist": {
+          "INSUFFICIENT": 1,
+          "REJECT": 5
+        },
+        "after_dist": {
+          "ACCEPT": 3,
+          "INSUFFICIENT": 2
+        },
+        "state": "opened"
+      },
+      {
+        "probe_id": "0x2430fde68340302d453ea8fa3186b91c336dec0110ad6c100a6ef605859c2ae6",
+        "index": 6,
+        "family": "missing_confirmation",
+        "before": 0.1667,
+        "after": 0.1667,
+        "before_dist": {
+          "ACCEPT": 1,
+          "INSUFFICIENT": 5
+        },
+        "after_dist": {
+          "ACCEPT": 1,
+          "INSUFFICIENT": 5
+        },
+        "state": "clean"
+      },
+      {
+        "probe_id": "0xda5794d38255d0991a2f113914ab525cbfd1823c845b1bac150827ce2d24c044",
+        "index": 7,
+        "family": "criteria_gap",
+        "before": 0.3333,
+        "after": 0.0,
+        "before_dist": {
+          "ACCEPT": 4,
+          "INSUFFICIENT": 2
+        },
+        "after_dist": {
+          "INSUFFICIENT": 6
+        },
+        "state": "closed"
+      }
+    ]
+  },
+  "comparable": {
+    "ok": true,
+    "mismatched": {}
+  },
+  "generalization": {
+    "probe_set_fresh": "ps_4a8062c5562c47a4",
+    "K": 2,
+    "N": 8,
+    "split_mean": 0.0625,
+    "noise_floor": 0.0,
+    "families_still_splitting": [
+      "late_evidence",
+      "regression_after_fix"
+    ]
+  },
+  "verdict": "frozen counterexamples unchanged at 4; mean divergence fell 0.3125->0.225; 2 probe(s) closed; 2 newly opened. the fresh set aimed at the new rule found 2/8 (mean 0.0625) -- better than the frozen set, so the rewrite generalized."
+}
