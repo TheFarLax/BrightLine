@@ -1,5 +1,5 @@
 {
-  "hash": "0xe38932adddc76129cb984018b3432cf1b64e64dc0e39832a8a87976e0041effe",
+  "hash": "0xda883e46b1e9eda41ec40b0e50941436e4eae4eb89b0e379fb819937b39e7280",
   "from_address": "0xCA71D5D065833919207316a62A61b599639500f0",
   "to_address": "0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7",
   "data": {
@@ -178,14 +178,14 @@
   "consensus_data": {
     "error": "max_recovery_cycles_exceeded",
     "recovery_count": 3,
-    "max_recovery_exhausted_at": 1788519410
+    "max_recovery_exhausted_at": 1788522175
   },
-  "gaslimit": 218,
-  "nonce": 218,
+  "gaslimit": 226,
+  "nonce": 226,
   "r": null,
   "s": null,
   "v": null,
-  "created_at": "2026-09-04T10:56:17.608822+00:00",
+  "created_at": "2026-09-04T11:42:19.907447+00:00",
   "leader_only": true,
   "execution_mode": "LEADER_ONLY",
   "origin_address": "0xCA71D5D065833919207316a62A61b599639500f0",
@@ -217,13 +217,13 @@
     ]
   },
   "value_credited": false,
-  "current_timestamp": "1788519411",
+  "current_timestamp": "1788522179",
   "sender": "0xCA71D5D065833919207316a62A61b599639500f0",
   "recipient": "0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7",
   "tx_slot": "0",
-  "created_timestamp": "1788519377",
+  "created_timestamp": "1788522139",
   "random_seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "tx_id": "0xe38932adddc76129cb984018b3432cf1b64e64dc0e39832a8a87976e0041effe",
+  "tx_id": "0xda883e46b1e9eda41ec40b0e50941436e4eae4eb89b0e379fb819937b39e7280",
   "read_state_block_range": {
     "activation_block": "0",
     "processing_block": "0",
