@@ -72,9 +72,9 @@ class GatedEscrow(gl.Contract):
     deals: TreeMap[str, Deal]
     deal_ids: DynArray[str]
 
-    def __init__(self, registry: Address) -> None:
+    def __init__(self, registry: str) -> None:
         self.owner = gl.message.sender_address
-        self.registry = registry
+        self.registry = Address(registry)
 
     # ------------------------------------------------------------------------ deals
     @gl.public.write
@@ -132,23 +132,32 @@ class GatedEscrow(gl.Contract):
                            "amount": int(value), "counterexamples_at_lock": found,
                            "tolerated": allowed}, sort_keys=True)
 
+    # Settlement records the outcome and the entitled party; it does not move value.
+    # Paying out to an externally owned account is an *external* message, which the
+    # protocol allows only `on='finalized'` and which Studio does not implement at
+    # all. Since the demonstrated behaviour is the gate on `lock()`, wiring a payout
+    # that cannot run in the environment we can actually test would be theatre.
     @gl.public.write
-    def release(self, deal_id: str) -> None:
+    def release(self, deal_id: str) -> str:
         deal = self._locked(deal_id)
         if gl.message.sender_address != deal.payer:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} only the payer may release")
         deal.state = STATE_RELEASED
         self.deals[deal_id] = deal
-        gl.advanced.emit_raw_transfer(deal.payee, u256(int(deal.amount)))
+        return json.dumps({"deal_id": deal_id, "state": STATE_RELEASED,
+                           "entitled": deal.payee.as_hex,
+                           "amount": int(deal.amount)}, sort_keys=True)
 
     @gl.public.write
-    def refund(self, deal_id: str) -> None:
+    def refund(self, deal_id: str) -> str:
         deal = self._locked(deal_id)
         if gl.message.sender_address != deal.payee:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} only the payee may refund")
         deal.state = STATE_REFUNDED
         self.deals[deal_id] = deal
-        gl.advanced.emit_raw_transfer(deal.payer, u256(int(deal.amount)))
+        return json.dumps({"deal_id": deal_id, "state": STATE_REFUNDED,
+                           "entitled": deal.payer.as_hex,
+                           "amount": int(deal.amount)}, sort_keys=True)
 
     def _locked(self, deal_id: str) -> Deal:
         if deal_id not in self.deals:

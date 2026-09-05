@@ -1,0 +1,36 @@
+{
+  "schema": "brightline.index/1",
+  "reports": [
+    {
+      "file": "v1_ps_6ce467da9d20c1f2_studionet.json",
+      "path": "reports/v1_ps_6ce467da9d20c1f2_studionet.json",
+      "label": "v1 \u00b7 4/8 counterexamples \u00b7 ps_6ce467da9d20c1f2",
+      "rule_label": "v1",
+      "probe_set_id": "ps_6ce467da9d20c1f2",
+      "K": 4,
+      "N": 8,
+      "show_retest": true
+    },
+    {
+      "file": "v2_fresh_ps_4a8062c5562c47a4_studionet.json",
+      "path": "reports/v2_fresh_ps_4a8062c5562c47a4_studionet.json",
+      "label": "v2 \u00b7 2/8 counterexamples \u00b7 ps_4a8062c5562c47a4",
+      "rule_label": "v2",
+      "probe_set_id": "ps_4a8062c5562c47a4",
+      "K": 2,
+      "N": 8,
+      "show_retest": false
+    },
+    {
+      "file": "v2_frozen_ps_6ce467da9d20c1f2_studionet.json",
+      "path": "reports/v2_frozen_ps_6ce467da9d20c1f2_studionet.json",
+      "label": "v2 \u00b7 4/8 counterexamples \u00b7 ps_6ce467da9d20c1f2",
+      "rule_label": "v2",
+      "probe_set_id": "ps_6ce467da9d20c1f2",
+      "K": 4,
+      "N": 8,
+      "show_retest": false
+    }
+  ],
+  "retest": "reports/retest.json"
+}

@@ -67,7 +67,8 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 | **E3** real Bradbury transaction | **PASS** — `adjudicate` with `rotations=0` reached `Accepted` / `FinishedWithReturn` in 34.7s; decision recovered from `debug_trace_transaction` `return_data` |
 | **E4** `validatorVotes` decode | **PASS** — inference confirmed on real revealed votes (see above); the fallback path stays implemented but is no longer load-bearing |
 | **E5** frozen probe reuse across rule versions | **PASS** — V2 measured against V1's probe ids |
-| **E6** calibration study | not started |
+| **E6** calibration study | **DOES NOT PASS** — C1/C2/C4 pass, C3 fails, C5 not evaluable as written (A1 unmeasurable), C6 fails. Branches applied in `experiments/E6_calibration/final.json` |
+| **E8** registry → report → escrow | **PASS** on studionet — report published and read back, gate allows a compliant deal and refuses both a below-tolerance deal and an untested rule, deal stays `OPEN` on refusal |
 | **E7** rewrite reduces counterexamples | in progress (V2 frozen + fresh arms) |
 
 ## genlayer-py 0.16.3 vs. Bradbury (found while running E3)
@@ -88,3 +89,11 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 | Fee accounting is active on Bradbury | `[X]` refuted | `gen_getTransactionReceipt.fees` is `null`, which the docs define as fee accounting disabled or FeeManager unavailable. A zero deposit on the payable `addTransaction` is accepted |
 | `debug_trace_transaction` works on Bradbury and carries the return value | `[E]` | Returns `eq_outputs`, `return_data`, `stdout`, `stderr`, `genvm_log`, `result_code`. `return_data` calldata-decodes to the contract's full result object |
 | `gen_call` with `leader_results` on Bradbury | `[A]` untested | Now reachable (the 403 was the User-Agent), but unnecessary: the PANEL channel supersedes it and `sim_config` is Studio-only anyway |
+
+## Contract-level reverts (found while running E8)
+
+| Claim | Status | Evidence |
+|---|---|---|
+| A reverted contract call shows up as a failed transaction | `[X]` refuted | A `gl.vm.UserError` still yields `ACCEPTED` / `MAJORITY_AGREE` — the validators agree the call failed. The signal is on the leader receipt: `execution_result == "ERROR"` with `result.status == "rollback"`, and `result.payload` carries the UserError text verbatim. `execution_failed()` / `revert_message()` in `brightline/panel.py` |
+| Direct mode can test two interacting contracts | `[X]` refuted | `ImportError: only one contract is allowed`. Cross-contract gate tests skip by design; the gate is verified against real consensus by `scripts/e8_registry_escrow.py` |
+| `sim_config` works on a public testnet | `[X]` | Studio-only. The PANEL channel cannot run on Bradbury, which is why the LIVE arm yields votes rather than a decision distribution — and why C6 had nothing to correlate |

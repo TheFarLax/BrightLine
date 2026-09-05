@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brightline — agreement fuzzer</title>
+<style>
+  .viz-root {
+    color-scheme: light;
+    --surface-0:      #f4f3f0;
+    --surface-1:      #fcfcfb;
+    --border:         #dedcd6;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #82817c;
+    --series-1:       #2a78d6;
+    --series-faint:   #cde2fb;
+    --rule:           #b8b6ae;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --surface-0:      #121211;
+      --surface-1:      #1a1a19;
+      --border:         #383835;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #8e8d84;
+      --series-1:       #3987e5;
+      --series-faint:   #184f95;
+      --rule:           #5a5954;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --surface-0:      #121211;
+    --surface-1:      #1a1a19;
+    --border:         #383835;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #8e8d84;
+    --series-1:       #3987e5;
+    --series-faint:   #184f95;
+    --rule:           #5a5954;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .viz-root {
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    min-height: 100vh;
+    padding: 32px 20px 72px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 1.55rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 1.0rem; margin: 40px 0 12px; letter-spacing: 0.02em;
+       text-transform: uppercase; color: var(--text-secondary); font-weight: 600; }
+  p  { color: var(--text-secondary); margin: 0 0 12px; }
+  .lede { font-size: 1.05rem; color: var(--text-secondary); margin-bottom: 24px; }
+  code, .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+                font-size: 0.86em; }
+  a { color: var(--series-1); }
+
+  .scope { border: 1px solid var(--border); border-left: 3px solid var(--rule);
+           background: var(--surface-1); padding: 12px 16px; border-radius: 6px;
+           font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 28px; }
+  .scope b { color: var(--text-primary); }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+           gap: 12px; }
+  .tile { background: var(--surface-1); border: 1px solid var(--border);
+          border-radius: 8px; padding: 14px 16px; }
+  .tile .k { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+             color: var(--text-muted); margin-bottom: 6px; }
+  .tile .v { font-size: 1.9rem; font-weight: 650; letter-spacing: -0.02em;
+             font-variant-numeric: tabular-nums; }
+  .tile .n { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th { text-align: left; font-weight: 600; color: var(--text-muted);
+       font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em;
+       padding: 0 10px 8px 0; }
+  td { padding: 7px 10px 7px 0; border-top: 1px solid var(--border);
+       vertical-align: middle; }
+  td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* Bars: 4px rounded data-end, anchored to a shared baseline, direct-labelled. */
+  .bar-cell { width: 46%; }
+  .track { position: relative; height: 12px; background: var(--surface-0);
+           border-radius: 2px; }
+  .fill { height: 12px; background: var(--series-1);
+          border-radius: 2px 4px 4px 2px; min-width: 2px; }
+  .tau { position: absolute; top: -3px; bottom: -3px; width: 1px;
+         background: var(--rule); }
+
+  .card { background: var(--surface-1); border: 1px solid var(--border);
+          border-radius: 8px; padding: 16px 18px; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 8px; font-size: 0.95rem; }
+  .card .scen { color: var(--text-secondary); border-left: 2px solid var(--border);
+                padding-left: 12px; margin: 10px 0 14px; }
+  .camp { display: flex; gap: 10px; align-items: baseline; margin-bottom: 5px;
+          font-size: 0.9rem; }
+  .camp .dot { width: 8px; height: 8px; border-radius: 2px; flex: 0 0 8px;
+               background: var(--series-1); margin-top: 6px; }
+  .camp .lab { font-weight: 650; min-width: 108px; }
+  .camp .who { color: var(--text-secondary); }
+  .why { font-size: 0.88rem; color: var(--text-secondary); font-style: italic;
+         margin-top: 10px; }
+  .missing { margin: 10px 0 0; padding-left: 18px; font-size: 0.88rem;
+             color: var(--text-secondary); }
+  .prov { background: var(--surface-1); border: 1px solid var(--border);
+          border-radius: 8px; padding: 14px 16px; font-size: 0.82rem;
+          color: var(--text-secondary); overflow-x: auto; }
+  .prov div { white-space: pre; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+         margin-bottom: 18px; }
+  select, button { font: inherit; font-size: 0.9rem; padding: 6px 10px;
+                   border: 1px solid var(--border); border-radius: 6px;
+                   background: var(--surface-1); color: var(--text-primary); }
+  .err { color: var(--text-primary); background: var(--surface-1);
+         border: 1px solid var(--border); border-left: 3px solid var(--series-1);
+         padding: 14px 16px; border-radius: 6px; }
+  .foot { margin-top: 44px; font-size: 0.82rem; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="viz-root">
+<div class="wrap">
+  <h1>Brightline</h1>
+  <p class="lede">An agreement fuzzer, run by the network that will later judge the
+  agreement. Every number below comes from real GenLayer transactions.</p>
+
+  <div class="scope">
+    <b>Scope.</b> Split Score is an <b>experimental studionet lab instrument</b>. The
+    E6 calibration study failed its matched-pair criterion, so it is <b>not</b>
+    validated for ranking two drafts of the same clause and is not used for
+    production gating. It is not a probability of dispute, not a prediction of how a
+    court would rule, and <b>decidability is not fairness</b> — a rule can be trivial
+    to adjudicate and still be one-sided. The primary output is the
+    <b>counterexample</b>, not the number.
+  </div>
+
+  <div class="row">
+    <select id="pick"></select>
+    <button id="theme" type="button">Toggle theme</button>
+  </div>
+
+  <div id="app"><p class="mono">loading…</p></div>
+
+  <div class="foot">
+    Raw receipts in <code>reports/raw/</code> · gates in <code>experiments/</code> ·
+    limits in <code>docs/LIMITATIONS.md</code> · results in <code>docs/RESULTS.md</code>
+  </div>
+</div>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

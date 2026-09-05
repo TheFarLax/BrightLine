@@ -216,6 +216,43 @@ def _result_name(receipt: dict) -> str:
     return ""
 
 
+def _leader_receipt(receipt: dict) -> dict:
+    cd = receipt.get("consensus_data") or {}
+    lr = cd.get("leader_receipt")
+    if isinstance(lr, list):
+        lr = lr[0] if lr else {}
+    return lr if isinstance(lr, dict) else {}
+
+
+def execution_failed(receipt: dict) -> bool:
+    """True when the contract reverted, even though consensus succeeded.
+
+    A `gl.vm.UserError` still produces an ACCEPTED / MAJORITY_AGREE transaction --
+    the validators agree the call failed -- so transaction status says nothing about
+    whether the call did what it was asked. The signal is on the leader receipt:
+    `execution_result == "ERROR"` with `result.status == "rollback"`.
+    """
+    lr = _leader_receipt(receipt)
+    if str(lr.get("execution_result", "")).upper() == "ERROR":
+        return True
+    result = lr.get("result")
+    return isinstance(result, dict) and str(result.get("status", "")) == "rollback"
+
+
+def revert_message(receipt: dict) -> str:
+    """The UserError text the contract raised, if any."""
+    lr = _leader_receipt(receipt)
+    result = lr.get("result")
+    if isinstance(result, dict):
+        payload = result.get("payload")
+        if isinstance(payload, str) and payload:
+            return payload
+    for key in ("error", "stderr"):
+        if lr.get(key):
+            return str(lr[key])
+    return ""
+
+
 def run_panel_one(ch: Chain, addr: str, rule_hash: str, probe_id: str,
                   pin: ValidatorPin, label: str | None = None,
                   attempts: int = 3, raw_dir: Path | None = None) -> Observation:

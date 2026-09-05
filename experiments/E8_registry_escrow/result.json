@@ -1,0 +1,82 @@
+{
+  "network": "studionet",
+  "started": "2026-09-05T12:57:02Z",
+  "registry": "0x8a3476D6c84cea489d4Eb9A0be744fe403560196",
+  "escrow": "0x3826C2374fBDBcb8a248e0523eF1f325b3F5A590",
+  "published": [
+    {
+      "file": "v1_ps_6ce467da9d20c1f2_studionet.json",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "K": 4,
+      "N": 8,
+      "probe_set_id": "ps_6ce467da9d20c1f2"
+    },
+    {
+      "file": "v2_fresh_ps_4a8062c5562c47a4_studionet.json",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "K": 2,
+      "N": 8,
+      "probe_set_id": "ps_4a8062c5562c47a4"
+    },
+    {
+      "file": "v2_frozen_ps_6ce467da9d20c1f2_studionet.json",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "K": 4,
+      "N": 8,
+      "probe_set_id": "ps_6ce467da9d20c1f2"
+    }
+  ],
+  "subject": {
+    "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+    "worst_counterexamples": 4,
+    "reports": 1
+  },
+  "case_lock_allowed": {
+    "deal": {
+      "amount": 10000000000000000,
+      "counterexamples_at_lock": 4,
+      "deal_id": "deal-ok-1788613042",
+      "max_counterexamples": 4,
+      "payee": "0xCA71D5D065833919207316a62A61b599639500f0",
+      "payer": "0xCA71D5D065833919207316a62A61b599639500f0",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "state": "LOCKED",
+      "summary_at_lock": "{\"reports\": 1, \"rows\": [{\"adversary_version\": \"adv-v1.0.0\", \"k\": 4, \"n\": 8, \"network\": \"studionet\", \"probe_set_id\": \"ps_6ce467da9d20c1f2\", \"report_hash\": \"0x3892c0c0aa6103bd62262bab7f1e2da7907602e1184e562f44ef18d904d366f6\", \"ts\": \"2026-09-05T12:36:14.136063Z\"}], \"rule_hash\": \"0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2\", \"tested\": true}",
+      "ts_locked": "2026-09-05T12:57:37.297586Z",
+      "ts_opened": "2026-09-05T12:57:27.563124Z"
+    },
+    "lock_return": {},
+    "tx": "0x65eed8f1b07351204f66477c80d379c73ad7192ef44c376a5d6eea01f8b8c5fa"
+  },
+  "lock_below_tolerance": {
+    "reverted": true,
+    "matched": true,
+    "message": "[EXPECTED] rule has 4 counterexamples, deal tolerates 3; tighten the rule or raise the tolerance deliberately",
+    "deal_state_after": "OPEN",
+    "tx": "0x22360611e634df0666cb1420edc2c78e3a7ebf17b43091bb4fe70c1d18af4ffe"
+  },
+  "lock_untested_rule": {
+    "reverted": true,
+    "matched": true,
+    "message": "[EXPECTED] rule has no published Brightline report; run the probes and publish before locking funds",
+    "deal_state_after": "OPEN",
+    "tx": "0xd6361c9590d9452f3b4b6c3d96df1e5bcbb006cb3886c510589ea10610d7a3af"
+  },
+  "release": {
+    "deal": {
+      "amount": 10000000000000000,
+      "counterexamples_at_lock": 4,
+      "deal_id": "deal-ok-1788613042",
+      "max_counterexamples": 4,
+      "payee": "0xCA71D5D065833919207316a62A61b599639500f0",
+      "payer": "0xCA71D5D065833919207316a62A61b599639500f0",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "state": "RELEASED",
+      "summary_at_lock": "{\"reports\": 1, \"rows\": [{\"adversary_version\": \"adv-v1.0.0\", \"k\": 4, \"n\": 8, \"network\": \"studionet\", \"probe_set_id\": \"ps_6ce467da9d20c1f2\", \"report_hash\": \"0x3892c0c0aa6103bd62262bab7f1e2da7907602e1184e562f44ef18d904d366f6\", \"ts\": \"2026-09-05T12:36:14.136063Z\"}], \"rule_hash\": \"0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2\", \"tested\": true}",
+      "ts_locked": "2026-09-05T12:57:37.297586Z",
+      "ts_opened": "2026-09-05T12:57:27.563124Z"
+    },
+    "tx": "0x76c27d110540190d34db51bef69ae7191c609c8e3d5322327cb04103b8502cff"
+  },
+  "gate_e8_pass": true
+}

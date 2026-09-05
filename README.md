@@ -89,6 +89,8 @@ already seen, and the number becomes theatre.
 
 ```
 contracts/brightline_probe.py   the only consensus-critical code
+contracts/brightline_registry.py  attestations: rule, probe set, K of N, tx hashes
+contracts/gated_escrow.py       refuses to lock funds against an untested rule
 prompts/adversary_v1.md         published adversary instructions (hash in every report)
 agreements/                     rules under test, v1 and v2
 probes/ps_*.json                frozen, content-addressed probe manifests
@@ -96,6 +98,7 @@ brightline/                     spec · adversary · chain · panel · report ·
 scripts/e*.py                   the approval gates, each writing raw evidence
 experiments/                    raw gate output, kept
 reports/                        generated reports + every raw receipt
+frontend/                       dependency-free viewer over the report artifacts
 docs/VERIFIED_VS_ASSUMED.md     every GenLayer claim and its status
 docs/LIMITATIONS.md             what this does not measure
 ```
@@ -115,8 +118,26 @@ docs/LIMITATIONS.md             what this does not measure
     reports/v1_....json reports/v2_frozen_....json --fresh reports/v2_fresh_....json
 ```
 
+Publish a report and exercise the escrow gate, then view it:
+
+```bash
+.venv/bin/python -m brightline.publish reports/v1_ps_6ce467da9d20c1f2_studionet.json
+.venv/bin/python scripts/e8_registry_escrow.py studionet
+.venv/bin/python scripts/serve.py            # http://127.0.0.1:8800/frontend/
+```
+
 Bradbury (network truth, `scripts/e3_e4_bradbury.py`) needs a funded account; the
 faucet requires GitHub OAuth plus a Turnstile challenge, so that step is human.
+
+## What the escrow gates on
+
+Not a Split Score. The E6 calibration study failed its matched-pair criterion, so the
+score is scoped to a studionet lab instrument and is never a production gating input.
+`GatedEscrow.lock()` checks exactly two things: that a report exists for the rule at
+all, and that the **worst** published counterexample count is within a tolerance the
+payer fixed before opening the deal. `worst_counterexamples` takes the maximum across
+competing reports, so publishing until a flattering run appears buys nothing — and a
+counterparty can publish their own adversary's findings against the same rule.
 
 ## Honesty notes
 
