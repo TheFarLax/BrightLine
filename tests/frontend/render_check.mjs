@@ -1,9 +1,9 @@
-/* Headless render check for the viewer.
+/* Render check for the viewer.
  *
- * There is no browser on this host, so "render it and look at it" becomes: execute
- * the real render path against the real report artifacts with a minimal DOM stub,
- * then assert on the HTML it produces. Catches the failures a syntax check cannot --
- * wrong field names, undefined reads, empty sections.
+ * There is no browser on this host, so "render it and look at it" becomes: run the
+ * real render functions against the real report artifacts and assert on the HTML.
+ * Catches what a syntax check cannot -- wrong field names, undefined reads, empty
+ * sections. The browser test (browser_test.mjs) covers the wiring; this covers output.
  *
  *   node tests/frontend/render_check.mjs
  */
@@ -11,44 +11,19 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import vm from "node:vm";
 import assert from "node:assert/strict";
 
-const here = dirname(fileURLToPath(import.meta.url));
-const root = join(here, "..", "..");
+import { renderReport } from "../../frontend/lib/render.js";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const read = (p) => JSON.parse(readFileSync(join(root, p), "utf8"));
 
 const index = read("reports/index.json");
 const report = read(index.reports[0].path);
 const retest = read(index.retest);
 
-// Minimal DOM: the app only ever sets innerHTML and attaches listeners.
-const nodes = {};
-const makeNode = (id) => (nodes[id] = {
-  innerHTML: "", value: "", addEventListener() {},
-  setAttribute() {}, getAttribute: () => null,
-});
-["#app", "#pick", "#theme"].forEach(makeNode);
+const html = renderReport(report, retest);
 
-const ctx = {
-  document: {
-    querySelector: (sel) => nodes[sel] ?? makeNode(sel),
-    documentElement: { setAttribute() {}, getAttribute: () => null },
-  },
-  fetch: async (url) => {
-    const path = url.replace(/^\.\.\//, "");
-    return { json: async () => read(path) };
-  },
-  console,
-  setTimeout,
-};
-vm.createContext(ctx);
-vm.runInContext(readFileSync(join(root, "frontend/app.js"), "utf8"), ctx);
-
-// boot() is async; let its microtasks drain.
-await new Promise((r) => setTimeout(r, 50));
-
-const html = nodes["#app"].innerHTML;
 const checks = [
   ["rendered something", html.length > 3000],
   ["no literal undefined", !html.includes(">undefined<")],
@@ -68,6 +43,13 @@ const checks = [
   ["provenance keys", html.includes("report_hash") && html.includes("adversary_prompt_hash")],
   ["panel models listed", html.includes("openai/gpt-5.1")],
 ];
+
+// Every committed report must render without throwing, not just the first.
+for (const entry of index.reports) {
+  const r = read(entry.path);
+  const out = renderReport(r, entry.show_retest ? retest : null);
+  checks.push([`renders ${entry.file}`, out.length > 2000 && !out.includes(">undefined<")]);
+}
 
 let failed = 0;
 for (const [name, ok] of checks) {
