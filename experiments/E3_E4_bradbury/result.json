@@ -1,9 +1,356 @@
 {
   "network": "testnet-bradbury",
   "address": "0xCA71D5D065833919207316a62A61b599639500f0",
-  "started": "2026-09-04T08:11:18Z",
-  "balance": "0",
-  "gate_e3_pass": false,
-  "gate_e4_pass": null,
-  "blocked_on": "faucet funding (GitHub OAuth + Turnstile)"
+  "started": "2026-09-05T01:41:30Z",
+  "balance": "47940613848784191200",
+  "rpc": {
+    "gen_dbg_ping": true,
+    "gen_getTransactionReceipt": true
+  },
+  "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+  "probe_id": "0x49cecb3cb5603ca23b33b921f704cbc9bc6eeaddfca04f13d14071d96a6305da",
+  "contract_address": "0xebd5A75F832985C3e3ddeFe2f60c7B7eA97C3880",
+  "e3": {
+    "tx": "0x0b39b11f30afcd163602c08d8f9eaa33f15105cf18252173c16357526e2f365c",
+    "status": "Accepted",
+    "result": "FinishedWithReturn",
+    "txExecutionResult": 1,
+    "seconds": 34.7,
+    "payload": null,
+    "evm_tx": "5ce1aa39de74c430fd3f88613c382dc8eeb702d6cface2170422991fc64792be",
+    "evm_gas_used": 908993,
+    "explorer": "https://explorer-bradbury.genlayer.com/tx/0x0b39b11f30afcd163602c08d8f9eaa33f15105cf18252173c16357526e2f365c",
+    "trace": {
+      "round_0_keys": [
+        "eq_outputs",
+        "genvm_log",
+        "result_code",
+        "return_data",
+        "run_time",
+        "stderr",
+        "stdout",
+        "storage_proof",
+        "transaction_id"
+      ],
+      "round_0_result_code": 0,
+      "round_0_payload": {
+        "data": "{\"confidence\": 95, \"decision\": \"INSUFFICIENT\", \"probe_id\": \"0x49cecb3cb5603ca23b33b921f704cbc9bc6eeaddfca04f13d14071d96a6305da\", \"reason\": \"The rule requires payment if 'the contributor delivers a working fix.' The facts present two contradictory test results on identical code: one run shows 'all pass' and another shows '2 failing.' The rule does not specify which run is authoritative when results conflict, and no stated rule resolves this tie-break.\", \"rule_hash\": \"0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2\", \"status\": \"OK\"}",
+        "events": [],
+        "fingerprint": {
+          "frames": [
+            {
+              "func": 130,
+              "module_name": "cpython"
+            },
+            {
+              "func": 14412,
+              "module_name": "cpython"
+            },
+            {
+              "func": 12274,
+              "module_name": "cpython"
+            },
+            {
+              "func": 12282,
+              "module_name": "cpython"
+            },
+            {
+              "func": 12362,
+              "module_name": "cpython"
+            },
+            {
+              "func": 12360,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15337,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15336,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15331,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15328,
+              "module_name": "cpython"
+            },
+            {
+              "func": 14205,
+              "module_name": "cpython"
+            },
+            {
+              "func": 14202,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15327,
+              "module_name": "cpython"
+            },
+            {
+              "func": 119,
+              "module_name": "cpython"
+            }
+          ],
+          "module_instances": {
+            "cpython": {
+              "memories": [
+                "<memory at 0x79561fd540>"
+              ]
+            },
+            "softfloat": {
+              "memories": [
+                "<memory at 0x79561fda80>"
+              ]
+            }
+          }
+        },
+        "kind": "Return",
+        "storage_changes": [
+          [
+            "<memory at 0x79561fd780>",
+            "<memory at 0x79561fd6c0>"
+          ],
+          [
+            "<memory at 0x79561fd840>",
+            "<memory at 0x79561fd9c0>"
+          ],
+          [
+            "<memory at 0x79561fd900>",
+            "<memory at 0x79561fd600>"
+          ],
+          [
+            "<memory at 0x79561fdc00>",
+            "<memory at 0x79561fdb40>"
+          ],
+          [
+            "<memory at 0x79561fdd80>",
+            "<memory at 0x79561fdcc0>"
+          ]
+        ]
+      },
+      "round_0_eq_outputs": 0,
+      "round_1_keys": [
+        "eq_outputs",
+        "genvm_log",
+        "result_code",
+        "return_data",
+        "run_time",
+        "stderr",
+        "stdout",
+        "storage_proof",
+        "transaction_id"
+      ],
+      "round_1_result_code": 0,
+      "round_1_payload": {
+        "data": "{\"confidence\": 95, \"decision\": \"INSUFFICIENT\", \"probe_id\": \"0x49cecb3cb5603ca23b33b921f704cbc9bc6eeaddfca04f13d14071d96a6305da\", \"reason\": \"The rule requires payment if 'the contributor delivers a working fix.' The facts present two contradictory test results on identical code: one run shows 'all pass' and another shows '2 failing.' The rule does not specify which run is authoritative when results conflict, and no stated rule resolves this tie-break.\", \"rule_hash\": \"0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2\", \"status\": \"OK\"}",
+        "events": [],
+        "fingerprint": {
+          "frames": [
+            {
+              "func": 130,
+              "module_name": "cpython"
+            },
+            {
+              "func": 14412,
+              "module_name": "cpython"
+            },
+            {
+              "func": 12274,
+              "module_name": "cpython"
+            },
+            {
+              "func": 12282,
+              "module_name": "cpython"
+            },
+            {
+              "func": 12362,
+              "module_name": "cpython"
+            },
+            {
+              "func": 12360,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15337,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15336,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15331,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15328,
+              "module_name": "cpython"
+            },
+            {
+              "func": 14205,
+              "module_name": "cpython"
+            },
+            {
+              "func": 14202,
+              "module_name": "cpython"
+            },
+            {
+              "func": 15327,
+              "module_name": "cpython"
+            },
+            {
+              "func": 119,
+              "module_name": "cpython"
+            }
+          ],
+          "module_instances": {
+            "cpython": {
+              "memories": [
+                "<memory at 0x79561fdfc0>"
+              ]
+            },
+            "softfloat": {
+              "memories": [
+                "<memory at 0x79561fe080>"
+              ]
+            }
+          }
+        },
+        "kind": "Return",
+        "storage_changes": [
+          [
+            "<memory at 0x79561fe140>",
+            "<memory at 0x79561fe200>"
+          ],
+          [
+            "<memory at 0x79561fe2c0>",
+            "<memory at 0x79561fde40>"
+          ],
+          [
+            "<memory at 0x79561fe440>",
+            "<memory at 0x79561fe380>"
+          ],
+          [
+            "<memory at 0x79561fe5c0>",
+            "<memory at 0x79561fe500>"
+          ],
+          [
+            "<memory at 0x79561fe740>",
+            "<memory at 0x79561fe680>"
+          ]
+        ]
+      },
+      "round_1_eq_outputs": 0
+    }
+  },
+  "gate_e3_pass": true,
+  "e4": {
+    "numOfInitialValidators": 5,
+    "initialRotations": 0,
+    "statusName": null,
+    "epoch": 146,
+    "n_round_entries": 1,
+    "fallback": {
+      "txExecutionResult": 1,
+      "txExecutionResultName": null,
+      "is_nondet_disagree": false,
+      "distinct_result_hashes": 1,
+      "result_hash_count": 5
+    },
+    "informative_round": {
+      "raw": "AQEBAQE=",
+      "n_validators": 5,
+      "votes_revealed": 5,
+      "votes_committed": 5,
+      "decoded_bytes": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "byte_count": 5,
+      "aligns_with_validator_count": true,
+      "all_bytes_in_enum": true,
+      "per_validator": [
+        {
+          "address": "0x4cd1ab61867487f45988db08eb18bd00e20c518a",
+          "byte": 1,
+          "name": "FinishedWithReturn"
+        },
+        {
+          "address": "0x2cd9051e10cd1547a7b64ef61ebf1e608235dbda",
+          "byte": 1,
+          "name": "FinishedWithReturn"
+        },
+        {
+          "address": "0x470aaa7de37ff3e1c2b38ed9096263ca0d541f21",
+          "byte": 1,
+          "name": "FinishedWithReturn"
+        },
+        {
+          "address": "0x58a7b7ac6cb01843e4e5af117c551e59449e0f49",
+          "byte": 1,
+          "name": "FinishedWithReturn"
+        },
+        {
+          "address": "0x2d012a292244c7ce6423a114d19109990923af76",
+          "byte": 1,
+          "name": "FinishedWithReturn"
+        }
+      ],
+      "n_nondet_disagree": 0
+    },
+    "all_rounds": [
+      {
+        "raw": "AQEBAQE=",
+        "n_validators": 5,
+        "votes_revealed": 5,
+        "votes_committed": 5,
+        "decoded_bytes": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "byte_count": 5,
+        "aligns_with_validator_count": true,
+        "all_bytes_in_enum": true,
+        "per_validator": [
+          {
+            "address": "0x4cd1ab61867487f45988db08eb18bd00e20c518a",
+            "byte": 1,
+            "name": "FinishedWithReturn"
+          },
+          {
+            "address": "0x2cd9051e10cd1547a7b64ef61ebf1e608235dbda",
+            "byte": 1,
+            "name": "FinishedWithReturn"
+          },
+          {
+            "address": "0x470aaa7de37ff3e1c2b38ed9096263ca0d541f21",
+            "byte": 1,
+            "name": "FinishedWithReturn"
+          },
+          {
+            "address": "0x58a7b7ac6cb01843e4e5af117c551e59449e0f49",
+            "byte": 1,
+            "name": "FinishedWithReturn"
+          },
+          {
+            "address": "0x2d012a292244c7ce6423a114d19109990923af76",
+            "byte": 1,
+            "name": "FinishedWithReturn"
+          }
+        ],
+        "n_nondet_disagree": 0
+      }
+    ]
+  },
+  "gate_e4_pass": true
 }

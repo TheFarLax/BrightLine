@@ -42,6 +42,64 @@ VOTE_ENUM = {0: "NotVoted", 1: "FinishedWithReturn", 2: "FinishedWithError",
              3: "Timeout", 4: "NondetDisagree", 5: "DeterministicViolation"}
 
 
+def decode_return_data(blob) -> dict | None:
+    """Decode a trace's `return_data` into our result object."""
+    from genlayer_py.abi.calldata import decode as calldata_decode
+    if not blob:
+        return None
+    try:
+        if isinstance(blob, str):
+            raw = bytes.fromhex(blob[2:] if blob.startswith("0x") else blob)
+        else:
+            raw = bytes(blob)
+        val = calldata_decode(raw)
+        for _ in range(3):
+            if isinstance(val, str):
+                val = json.loads(val)
+            else:
+                break
+        return val if isinstance(val, dict) else {"decoded": val}
+    except Exception as exc:
+        return {"decode_error": repr(exc)[:200]}
+
+
+def trace_payload(ch: Chain, tx_id: str) -> dict:
+    """Best-effort recovery of the leader's decision on a node-API network.
+
+    The node receipt carries consensus bookkeeping but no return value, so the
+    decision comes from the execution trace instead. Failure here is not fatal:
+    E3/E4 are about consensus data, not the payload.
+    """
+    out: dict = {}
+    for round_ in (0, 1):
+        try:
+            tr = ch.trace(tx_id, round_=round_)
+        except Exception as exc:
+            out[f"round_{round_}_error"] = repr(exc)[:200]
+            continue
+        if not isinstance(tr, dict):
+            out[f"round_{round_}_type"] = str(type(tr))
+            continue
+        out[f"round_{round_}_keys"] = sorted(tr.keys())
+        out[f"round_{round_}_result_code"] = tr.get("result_code")
+        out[f"round_{round_}_payload"] = decode_return_data(tr.get("return_data"))
+        out[f"round_{round_}_eq_outputs"] = len(tr.get("eq_outputs") or [])
+    return out
+
+
+def informative_round(rounds: list[dict]) -> dict:
+    """Pick the round entry that actually carries revealed votes.
+
+    Bradbury's `roundData` holds several entries all labelled `round: 0` -- one per
+    attempt. Reading `roundData[0]` gets the pre-reveal record, whose vote bytes are
+    all zero (`NotVoted`) and would look like "nobody disagreed".
+    """
+    revealed = [r for r in rounds if int(r.get("votesRevealed") or 0) > 0]
+    if revealed:
+        return revealed[-1]
+    return rounds[-1] if rounds else {}
+
+
 def decode_votes(round_data: dict) -> dict:
     """Test the one load-bearing inference about the receipt format."""
     blob = round_data.get("validatorVotes") or ""
@@ -75,7 +133,7 @@ def decode_votes(round_data: dict) -> dict:
 
 def fallback_signal(receipt: dict) -> dict:
     """The documented path that needs no inference."""
-    rd = (receipt.get("roundData") or [{}])[0]
+    rd = informative_round(receipt.get("roundData") or [{}])
     hashes = [h for h in (rd.get("validatorResultHash") or []) if h]
     return {
         "txExecutionResult": receipt.get("txExecutionResult"),
@@ -131,16 +189,23 @@ def main(network: str = "testnet-bradbury") -> int:
     print("\nadjudicating with rotations=0 so a split is not masked by rotation ...")
     t0 = time.time()
     rec = ch.write(addr, "adjudicate", [spec.rule_hash, probe.probe_id],
-                   rotations=0, retries=90)
+                   rotations=0, timeout=900)
     tx = str(rec.get("hash") or rec.get("tx_id") or "")
-    log["e3"] = {"tx": tx, "status": _status_name(rec), "result": _result_name(rec),
+    exec_num = rec.get("txExecutionResult")
+    log["e3"] = {"tx": tx, "status": _status_name(rec),
+                 "result": _result_name(rec) or VOTE_ENUM.get(exec_num, str(exec_num)),
+                 "txExecutionResult": exec_num,
                  "seconds": round(time.time() - t0, 1),
                  "payload": extract_return(rec),
+                 "evm_tx": rec.get("evm_tx"),
+                 "evm_gas_used": rec.get("evm_gas_used"),
                  "explorer": ch.explorer(tx)}
     print(f"  tx {tx}\n  status={log['e3']['status']} result={log['e3']['result']} "
           f"({log['e3']['seconds']}s)")
+    log["e3"]["trace"] = trace_payload(ch, tx)
     (OUT / "receipt_sdk.json").write_text(json.dumps(rec, indent=2, default=str))
-    log["gate_e3_pass"] = bool(tx) and log["e3"]["status"].upper() not in ("", "CANCELED")
+    log["gate_e3_pass"] = bool(tx) and log["e3"]["status"] in (
+        "Accepted", "Finalized", "Undetermined")
 
     node = ch.node_receipt(tx)
     if node is None:
@@ -149,16 +214,18 @@ def main(network: str = "testnet-bradbury") -> int:
     else:
         (OUT / "receipt_node.json").write_text(json.dumps(node, indent=2, default=str))
         rounds = node.get("roundData") or []
+        chosen = informative_round(rounds)
         log["e4"] = {
             "numOfInitialValidators": node.get("numOfInitialValidators"),
             "initialRotations": node.get("initialRotations"),
             "statusName": node.get("statusName"),
             "epoch": node.get("epoch"),
-            "n_rounds": len(rounds),
+            "n_round_entries": len(rounds),
             "fallback": fallback_signal(node),
-            "rounds": [decode_votes(r) for r in rounds],
+            "informative_round": decode_votes(chosen),
+            "all_rounds": [decode_votes(r) for r in rounds],
         }
-        first = log["e4"]["rounds"][0] if log["e4"]["rounds"] else {}
+        first = log["e4"]["informative_round"]
         log["gate_e4_pass"] = bool(first.get("aligns_with_validator_count")
                                    and first.get("all_bytes_in_enum"))
         print(f"\n  E4 decode: bytes={first.get('byte_count')} "

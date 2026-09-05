@@ -25,21 +25,37 @@ REPO = Path(__file__).resolve().parent.parent
 KEYFILE = REPO / ".brightline" / "accounts.json"
 
 NETWORKS: dict[str, dict[str, Any]] = {
-    "localnet": {"chain": g.localnet, "rpc": "http://127.0.0.1:4000/api", "faucet": "sim"},
-    "studionet": {"chain": g.studionet, "rpc": "https://studio.genlayer.com/api", "faucet": "sim"},
+    "localnet": {"chain": g.localnet, "rpc": "http://127.0.0.1:4000/api",
+                 "faucet": "sim", "api": "studio"},
+    "studionet": {"chain": g.studionet, "rpc": "https://studio.genlayer.com/api",
+                  "faucet": "sim", "api": "studio"},
     "testnet-bradbury": {
         "chain": g.testnet_bradbury,
         "rpc": "https://rpc-bradbury.genlayer.com",
         "faucet": "external",
+        "api": "node",
         "explorer_tx": "https://explorer-bradbury.genlayer.com/tx/",
     },
     "testnet-asimov": {
         "chain": g.testnet_asimov,
         "rpc": "https://rpc-asimov.genlayer.com",
         "faucet": "external",
+        "api": "node",
         "explorer_tx": "https://explorer-asimov.genlayer.com/tx/",
     },
 }
+
+# Terminal consensus statuses from the documented v0.6 status table. Bradbury also
+# reports status 14, which is outside the documented 0-13 range and unknown to
+# genlayer-py 0.16.3 (`KeyError: '14'`), so status handling here is by name from
+# `gen_getTransactionStatus` and never through the SDK's decoder.
+#
+# LeaderTimeout and ValidatorsTimeout are deliberately NOT terminal: the docs
+# describe both as leaving the appeal window open, and a transaction observed at
+# LeaderTimeout on Bradbury went on to Finalize with FinishedWithReturn. Treating
+# them as terminal reports a false failure.
+TERMINAL_STATUSES = {"Accepted", "Finalized", "Undetermined", "Canceled"}
+APPEALABLE_STATUSES = {"LeaderTimeout", "ValidatorsTimeout"}
 
 
 @dataclass
@@ -89,7 +105,107 @@ def load_or_create_account(name: str = "default") -> Any:
     return g.create_account(store[name])
 
 
-class Chain:
+class NodeWriteMixin:
+    """Write path for node-API networks (Bradbury, Asimov).
+
+    genlayer-py 0.16.3 cannot complete a write here for two independent reasons:
+
+    * `_prepare_transaction` sets `gas` from a raw `eth_estimateGas` result, and the
+      submission reverted at the EVM layer in practice. Sending the identical
+      calldata with an explicit, headroomed gas limit succeeds (status 1, ~912k gas
+      used against a ~964k estimate), so the transaction is gas-bound, not
+      fee-bound: `addTransaction` is payable but accepts a zero deposit on Bradbury.
+    * `get_transaction` / `wait_for_transaction_receipt` raise `KeyError: '14'`
+      because Bradbury reports a consensus status outside the SDK's map.
+
+    So we encode and sign with the SDK's own helpers, submit with our own gas
+    headroom, recover the GenLayer transaction id from the `NewTransaction` event,
+    and then poll and fetch entirely over raw JSON-RPC.
+    """
+
+    GAS_HEADROOM = 1.6
+    GAS_FLOOR = 1_500_000
+
+    def _node_write(self, address: str, fn: str, args: list[Any],
+                    rotations: int | None, value: int, timeout: int,
+                    poll: float) -> dict:
+        from genlayer_py.abi.calldata import encode as calldata_encode
+        from genlayer_py.abi.transactions import serialize
+        from genlayer_py.contracts.actions import _encode_add_transaction_data
+        from genlayer_py.contracts.utils import make_calldata_object
+        from web3.logs import DISCARD
+
+        w3 = self.client.w3
+        inner = serialize([
+            calldata_encode(make_calldata_object(method=fn, args=args, kwargs=None)),
+            b"\x00",
+        ])
+        max_rot = self.meta["chain"].default_consensus_max_rotations if rotations is None else rotations
+        data = _encode_add_transaction_data(
+            self.client, self.account, address, int(max_rot), inner, 0)
+
+        cm = self.meta["chain"].consensus_main_contract["address"]
+        base = {"from": self.address(), "to": cm, "data": data, "value": hex(value)}
+        try:
+            gas = int(int(w3.eth.estimate_gas(base)) * self.GAS_HEADROOM)
+        except Exception:
+            gas = self.GAS_FLOOR
+        gas = max(gas, self.GAS_FLOOR)
+
+        latest = w3.eth.get_block("latest")
+        priority = w3.to_wei(2, "gwei")
+        tx = {"from": self.address(), "to": cm, "data": data, "value": value,
+              "nonce": self.client.get_current_nonce(self.address()),
+              "chainId": self.meta["chain"].id, "gas": gas,
+              "maxFeePerGas": int(latest["baseFeePerGas"]) + priority,
+              "maxPriorityFeePerGas": priority}
+        signed = self.account.sign_transaction(tx)
+        evm_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+        evm_receipt = w3.eth.wait_for_transaction_receipt(evm_hash, timeout=240)
+        if evm_receipt.status != 1:
+            raise RuntimeError(
+                f"EVM submission reverted for {fn} "
+                f"(gas={gas}, used={evm_receipt.gasUsed}, tx={evm_hash.hex()})")
+
+        contract = w3.eth.contract(abi=self.meta["chain"].consensus_main_contract["abi"])
+        events = contract.get_event_by_name("NewTransaction").process_receipt(
+            evm_receipt, DISCARD)
+        if not events:
+            raise RuntimeError(f"{fn}: no NewTransaction event; not picked up by consensus")
+        tx_id = w3.to_hex(events[0]["args"]["txId"])
+
+        status, code = self.wait_status(tx_id, timeout=timeout, poll=poll)
+        receipt = self.node_receipt(tx_id) or {}
+        receipt.setdefault("hash", tx_id)
+        receipt.setdefault("statusName", status)
+        receipt.setdefault("status", code)
+        receipt["evm_tx"] = evm_hash.hex()
+        receipt["evm_gas_used"] = evm_receipt.gasUsed
+        receipt["gas_limit_sent"] = gas
+        return receipt
+
+    def wait_status(self, tx_id: str, timeout: int = 600,
+                    poll: float = 5.0) -> tuple[str, int | None]:
+        """Poll `gen_getTransactionStatus` until a terminal consensus status.
+
+        Deliberately not the SDK's waiter: this reports whatever name the node
+        gives, including statuses the SDK's table does not know about.
+        """
+        import time as _time
+
+        deadline = _time.time() + timeout
+        last: tuple[str, int | None] = ("", None)
+        while _time.time() < deadline:
+            ok, payload = self.rpc_supports("gen_getTransactionStatus", [{"txId": tx_id}])
+            if ok and isinstance(payload, dict):
+                last = (str(payload.get("status", "")), payload.get("statusCode"))
+                if last[0] in TERMINAL_STATUSES:
+                    return last
+            _time.sleep(poll)
+        return last
+
+
+class Chain(NodeWriteMixin):
     def __init__(self, network: str = "studionet", account: Any | None = None):
         if network not in NETWORKS:
             raise SystemExit(f"unknown network {network!r}; have {list(NETWORKS)}")
@@ -163,10 +279,27 @@ class Chain:
     def write(self, address: str, fn: str, args: list[Any],
               sim: SimConfig | None = None, rotations: int | None = None,
               wait: TransactionStatus = TransactionStatus.ACCEPTED,
-              retries: int = 40, leader_only: bool = False) -> dict:
+              retries: int = 40, leader_only: bool = False,
+              value: int = 0, timeout: int = 900, poll: float = 5.0) -> dict:
+        """Submit a write and wait for a terminal consensus status.
+
+        Studio-era networks go through the SDK, which is where `sim_config` (the
+        pinned-model panel) is supported. Node-API networks use `_node_write`, which
+        exists because the SDK cannot complete a write against Bradbury -- see
+        NodeWriteMixin for the two reasons.
+        """
+        if self.meta.get("api") == "node":
+            if sim is not None or leader_only:
+                raise RuntimeError(
+                    "sim_config / leader_only are Studio-only; the PANEL channel "
+                    "cannot run on a public testnet, which is why the LIVE arm "
+                    "reports votes rather than a decision distribution")
+            return self._node_write(address, fn, args, rotations, value, timeout, poll)
+
         tx = self.client.write_contract(
             address=address, function_name=fn, account=self.account, args=args,
             consensus_max_rotations=rotations, sim_config=sim, leader_only=leader_only,
+            value=value,
         )
         tx_hash = tx.hex() if isinstance(tx, (bytes, bytearray)) else str(tx)
         receipt = self.client.wait_for_transaction_receipt(

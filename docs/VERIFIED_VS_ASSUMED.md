@@ -30,7 +30,7 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 | Studionet receipt exposes per-validator `node_config.primary_model.model` | `[E]` | E1 receipt: gemini-3-flash, kimi, gemma, gpt-5-4, glm |
 | Bradbury receipt exposes `roundData[]` with `roundValidators`, `validatorVotes`, `validatorVotesHash`, `validatorResultHash` | `[V]` `[E]` | docs `gen_getTransactionReceipt`; confirmed present on a live Bradbury query |
 | `txExecutionResult == 4` is `NondetDisagree` | `[V]` | docs `gen_getTransactionReceipt` |
-| `validatorVotes` is one byte per validator, aligned to `roundValidators`, values from the vote enum | `[A]` | Inferred from the documented example (5 validators, 5 entries, `"AAAAAAA="` → five zero bytes, `votesRevealed: 0`, `0 == NotVoted`). **E4 tests this. Blocked on funding.** Fallback recorded in `scripts/e3_e4_bradbury.py` |
+| `validatorVotes` is one byte per validator, aligned to `roundValidators`, values from the vote enum | `[E]` **confirmed** | E4 on Bradbury: `votes_revealed: 5`, `byte_count: 5`, `n_validators: 5`, aligned, every byte in the enum. Two independent vectors seen — `[1,1,1,1,1]` (unanimous, 1 distinct result hash) and `[1,1,1,1,3]` (one Timeout, 2 distinct hashes) — so the decode resolves non-uniform vectors, not just zero padding |
 | `Undetermined` is the rotation-exhaustion state, not the first sign of a split | `[V]` `[E]` | docs status table; E1 rotated 3 times before landing there |
 | `consensus_max_rotations` is settable per transaction | `[V]` `[E]` | `genlayer-py` signature; used with `rotations=0` |
 
@@ -64,8 +64,8 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 | **E1** contract deploys, registers, adjudicates | **PASS** — and the first adjudication produced a real 3–2 split |
 | **E2a** panel channel yields per-model decisions | **PASS** — 6 usable observations, self-split rate 0.0 |
 | **E2b** `gen_call` validator-mode replay | **FAIL on studionet** (RPC shape lacks `eqOutputs`); untested on Bradbury pending funding. Superseded by E2a, which is higher-resolution |
-| **E3** real Bradbury transaction | **BLOCKED** on faucet funding (human step) |
-| **E4** `validatorVotes` decode | **BLOCKED** on E3. Inference not assumed anywhere in the analyzer; fallback implemented |
+| **E3** real Bradbury transaction | **PASS** — `adjudicate` with `rotations=0` reached `Accepted` / `FinishedWithReturn` in 34.7s; decision recovered from `debug_trace_transaction` `return_data` |
+| **E4** `validatorVotes` decode | **PASS** — inference confirmed on real revealed votes (see above); the fallback path stays implemented but is no longer load-bearing |
 | **E5** frozen probe reuse across rule versions | **PASS** — V2 measured against V1's probe ids |
 | **E6** calibration study | not started |
 | **E7** rewrite reduces counterexamples | in progress (V2 frozen + fresh arms) |
@@ -76,5 +76,15 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 |---|---|---|
 | `client.read_contract` on Bradbury | `[X]` broken | Node API returns `gen_call` `result` as the documented **object** (`data`, `eqOutputs`, `status`, …); the SDK does `"0x" + enc_result` and raises `TypeError`. Studio-era endpoints return a hex string. Fixed in `Chain.read`, which builds the request with the SDK's own RLP helpers and normalizes both response shapes |
 | `client.get_transaction` / `wait_for_transaction_receipt` on Bradbury | `[X]` broken | Bradbury reports transaction **status 14**, which is absent from the SDK's `TRANSACTION_STATUS_NUMBER_TO_NAME` (docs describe 14 values, 0–13). Raises `KeyError: '14'`. Workaround: poll `gen_getTransactionStatus` and fetch `gen_getTransactionReceipt` over raw RPC |
-| `client.write_contract` on Bradbury | `[X]` reverts | The EVM-layer transaction to the consensus contract reverts (`tx_receipt.status != 1`). `_prepare_transaction` attaches only EVM gas (`maxFeePerGas`/`maxPriorityFeePerGas`) and 0.16.3 exposes no `fees` argument, so no GenLayer consensus fee deposit is sent. genlayer-js does (`fees: {distribution, feeValue}`), and the CLI exposes `estimate-fees` + `write --fees/--fee-value`. Deploys succeed; writes do not |
+| `client.write_contract` on Bradbury | `[X]` broken, worked around | The EVM-layer transaction to the consensus contract reverts (`tx_receipt.status != 1`). `_prepare_transaction` attaches only EVM gas (`maxFeePerGas`/`maxPriorityFeePerGas`) and 0.16.3 exposes no `fees` argument, so no GenLayer consensus fee deposit is sent. genlayer-js does (`fees: {distribution, feeValue}`), and the CLI exposes `estimate-fees` + `write --fees/--fee-value`. Root cause is **gas, not fees**: `_prepare_transaction` assigns `gas` straight from `eth_estimateGas` and the submission reverts, while the identical calldata sent with headroom succeeds (~912k used against a ~964k estimate). Fee accounting is reported `null` on Bradbury, so the payable deposit is irrelevant there. `NodeWriteMixin._node_write` encodes with the SDK's helpers, submits with 1.6× headroom, recovers the tx id from the `NewTransaction` event, and polls over raw RPC |
 | Bradbury deploy + view reads | `[E]` working | `BrightlineProbe` deployed at `0xebd5A75F832985C3e3ddeFe2f60c7B7eA97C3880`; `ruling_count` and `get_rule` read correctly through the fixed path |
+
+## Further Bradbury findings (E3/E4)
+
+| Claim | Status | Evidence |
+|---|---|---|
+| `LeaderTimeout` / `ValidatorsTimeout` are terminal | `[X]` refuted | A transaction observed at `LeaderTimeout` went on to `Finalized` with `FinishedWithReturn`. Both statuses leave the appeal window open, so treating them as terminal reports a false failure. `TERMINAL_STATUSES` now excludes them |
+| `roundData[0]` is the round to read | `[X]` refuted | Bradbury appends several entries all labelled `round: 0`, one per attempt. The pre-reveal entry has all-zero vote bytes (`NotVoted`) and would read as "nobody disagreed". Use the last entry with `votesRevealed > 0` |
+| Fee accounting is active on Bradbury | `[X]` refuted | `gen_getTransactionReceipt.fees` is `null`, which the docs define as fee accounting disabled or FeeManager unavailable. A zero deposit on the payable `addTransaction` is accepted |
+| `debug_trace_transaction` works on Bradbury and carries the return value | `[E]` | Returns `eq_outputs`, `return_data`, `stdout`, `stderr`, `genvm_log`, `result_code`. `return_data` calldata-decodes to the contract's full result object |
+| `gen_call` with `leader_results` on Bradbury | `[A]` untested | Now reachable (the 403 was the User-Agent), but unnecessary: the PANEL channel supersedes it and `sim_config` is Studio-only anyway |
