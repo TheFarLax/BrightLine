@@ -362,6 +362,22 @@ def run_consensus(ch: Chain, addr: str, rule_hash: str, probe_id: str,
         "explorer": ch.explorer(str(rec.get("hash") or "")),
     }
 
+    if not votes and ch.meta.get("api") == "node":
+        # Node-API receipt: votes live in roundData[].validatorVotes, base64, one
+        # byte per validator aligned to roundValidators (confirmed by E4).
+        from brightline.votes import node_vote_summary
+
+        summary = node_vote_summary(rec)
+        res.raw["node_votes"] = summary
+        for entry in (summary.get("per_validator") or []):
+            byte = entry["byte"]
+            kind = (DISAGREE if byte == 4 else AGREE if byte == 1 else INCONCLUSIVE)
+            res.observations.append(Observation(
+                label=f"validator:{entry['address'][:10]}", model="(network committee)",
+                kind=kind, tx=res.raw["tx"], tx_status=res.raw["status_name"],
+                seconds=elapsed, note=entry["name"]))
+        return res
+
     for address, vote in sorted(votes.items()):
         role = "leader" if address == leader_addr else "validator"
         res.observations.append(Observation(

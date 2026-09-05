@@ -160,7 +160,31 @@ class NodeWriteMixin:
               "maxFeePerGas": int(latest["baseFeePerGas"]) + priority,
               "maxPriorityFeePerGas": priority}
         signed = self.account.sign_transaction(tx)
-        evm_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+        # Bradbury answers -32005 "transaction gas rate limit exceeded" when the node
+        # is at capacity and supplies retryAfterMs. Honour it rather than failing the
+        # whole arm.
+        import time as _t
+        evm_hash = None
+        for attempt in range(1, 7):
+            try:
+                evm_hash = w3.eth.send_raw_transaction(signed.raw_transaction)
+                break
+            except Exception as exc:
+                msg = str(exc)
+                if "-32005" not in msg and "rate limit" not in msg.lower():
+                    raise
+                wait = 2.0 * attempt
+                for token in ("retryAfterMs\":", "retryAfterMs': "):
+                    if token in msg:
+                        try:
+                            wait = max(wait, int("".join(
+                                c for c in msg.split(token)[1][:8] if c.isdigit())) / 1000)
+                        except Exception:
+                            pass
+                print(f"    rate limited, retry {attempt}/6 in {wait:.1f}s")
+                _t.sleep(wait)
+        if evm_hash is None:
+            raise RuntimeError(f"{fn}: node stayed at capacity after 6 attempts")
         evm_receipt = w3.eth.wait_for_transaction_receipt(evm_hash, timeout=240)
         if evm_receipt.status != 1:
             raise RuntimeError(

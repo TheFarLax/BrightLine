@@ -41,7 +41,16 @@ from brightline.spec import AgreementSpec, canonical, sha  # noqa: E402
 
 A12_DOMAINS = ("bounty", "delivery", "refund")
 A5_DOMAINS = tuple(PAIRS)
-TEMP_PIN = ("openai", "gpt-5.1")          # studionet entry whose config exposes temperature
+# A1 (raised temperature) is UNMEASURABLE on studionet: every provider entry whose
+# config exposes `temperature` reports `is_model_available: false`, and the entries
+# that do work (the openrouter routes) expose an empty config with no temperature
+# knob. Confirmed against sim_getProvidersAndModels. Recorded rather than substituted
+# silently -- A0 already bounds sampling variance at the network's own temperature
+# (323 observations, 0.0); what is unavailable is the stress variant.
+A1_MEASURABLE = False
+A1_REASON = ("no studionet model is both is_model_available and exposes a temperature "
+             "config key; openrouter routes work but expose an empty config")
+A2_PIN = ("openrouter", "openai/gpt-5.1")
 REPEATS = 5
 
 # Meaning-preserving rewrites of each domain's probe 0 narrative. Facts are byte
@@ -81,6 +90,24 @@ PARAPHRASES: dict[str, list[str]] = {
 }
 
 
+def register_retry(ch: Chain, addr: str, fn: str, args: list, attempts: int = 4) -> None:
+    """Registration is deterministic and idempotent, so retrying is always safe.
+
+    A bare `write` here killed an earlier run: studionet congestion left a
+    `register_probe` at PENDING past the SDK's 120s budget and the exception
+    propagated out of the arm loop.
+    """
+    for attempt in range(1, attempts + 1):
+        try:
+            ch.write(addr, fn, args, retries=90)
+            return
+        except Exception as exc:
+            print(f"    {fn} attempt {attempt}/{attempts} failed: {type(exc).__name__}")
+            if attempt == attempts:
+                raise
+            time.sleep(10 * attempt)
+
+
 def divergence_of(observations: list) -> tuple[float | None, dict, int]:
     res = ProbeResult(probe_id="", rule_hash="", channel="PANEL",
                       observations=observations)
@@ -90,8 +117,18 @@ def divergence_of(observations: list) -> tuple[float | None, dict, int]:
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     log: dict = {"started": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                 "temp_model": "/".join(TEMP_PIN), "repeats": REPEATS,
-                 "a12_domains": list(A12_DOMAINS)}
+                 "model": "/".join(A2_PIN), "repeats": REPEATS,
+                 "a12_domains": list(A12_DOMAINS),
+                 "A1_measurable": A1_MEASURABLE, "A1_reason": A1_REASON}
+
+    prior = {}
+    if (OUT / "arms.json").exists():
+        prior = json.loads((OUT / "arms.json").read_text())
+        log.update({k: v for k, v in prior.items() if k in ("A0_repeat", "A2", "A5")})
+        print("resuming; already measured: "
+              f"A0rep={[x['domain'] for x in prior.get('A0_repeat', [])]} "
+              f"A2={[x['domain'] for x in prior.get('A2', [])]} "
+              f"A5={[x['domain'] for x in prior.get('A5', [])]}")
 
     ch = Chain("studionet")
     if ch.balance() == 0:
@@ -102,46 +139,64 @@ def main() -> int:
     raw = OUT / "raw_arms"
 
     # ------------------------------------------------------------------ A1 and A2
-    a1_cold, a1_hot, a2 = [], [], []
+    a1_cold = list(prior.get("A0_repeat", []))
+    a2 = list(prior.get("A2", []))
+    done_a0 = {x["domain"] for x in a1_cold}
+    done_a2 = {x["domain"] for x in a2}
     for domain in A12_DOMAINS:
+        if domain in done_a0 and domain in done_a2:
+            print(f"\n=== {domain}: already measured, skipping ===")
+            continue
         spec = AgreementSpec(rule_text=PAIRS[domain][0], label=f"pair_{domain}_loose",
                              domain=domain)
         probe = domain_probes(domain)[0]
         print(f"\n=== {domain} (loose) probe0 {probe.probe_id[:12]} ===")
 
-        for temp, bucket, tag in ((0.0, a1_cold, "A1 temp=0.0"), (0.9, a1_hot, "A1 temp=0.9")):
-            obs = []
-            for i in range(REPEATS):
-                o = run_panel_one(ch, addr, spec.rule_hash, probe.probe_id,
-                                  ValidatorPin(TEMP_PIN[0], TEMP_PIN[1], temperature=temp),
-                                  label=f"{tag} #{i}", raw_dir=raw)
-                obs.append(o)
-                print(f"  {tag} #{i}: {o.decision or o.kind}")
+        if domain in done_a0:
+            print(f"  A0rep already measured for {domain}")
+        if A1_MEASURABLE:
+            raise RuntimeError("A1 path retained for other networks")
+        print(f"  A1 skipped: {A1_REASON}")
+
+        # A1-substitute: identical probe, identical model, repeated at the network's
+        # own temperature. This is A0 measured directly rather than harvested from
+        # self-consistency votes, and it is labelled as a substitute, not as A1.
+        obs = []
+        for i in ([] if domain in done_a0 else range(REPEATS)):
+            o = run_panel_one(ch, addr, spec.rule_hash, probe.probe_id,
+                              ValidatorPin(A2_PIN[0], A2_PIN[1]),
+                              label=f"A0rep #{i}", raw_dir=raw)
+            obs.append(o)
+            print(f"  A0rep #{i}: {o.decision or o.kind}")
+        if obs:
             div, dist, inc = divergence_of(obs)
-            bucket.append({"domain": domain, "temperature": temp, "divergence": div,
-                           "distribution": dist, "inconclusive": inc})
-            print(f"  -> {tag} divergence {div} {dist}")
+            a1_cold.append({"domain": domain, "arm": "A0_repeat_same_model",
+                            "divergence": div, "distribution": dist, "inconclusive": inc})
+            print(f"  -> A0rep divergence {div} {dist}")
 
         # A2: same model, temp 0, three paraphrased narratives, identical facts.
         obs = []
-        for i, narrative in enumerate(PARAPHRASES[domain]):
+        for i, narrative in ([] if domain in done_a2 else list(enumerate(PARAPHRASES[domain]))):
             scenario = dict(probe.scenario)
             scenario["narrative"] = narrative
             blob = canonical(scenario)
             pid = sha(blob)
             if not ch.read(addr, "get_probe", [pid]):
-                ch.write(addr, "register_probe", [pid, blob])
+                register_retry(ch, addr, "register_probe", [pid, blob])
             o = run_panel_one(ch, addr, spec.rule_hash, pid,
-                              ValidatorPin(TEMP_PIN[0], TEMP_PIN[1], temperature=0.0),
+                              ValidatorPin(A2_PIN[0], A2_PIN[1]),
                               label=f"A2 paraphrase #{i}", raw_dir=raw)
             obs.append(o)
             print(f"  A2 paraphrase #{i}: {o.decision or o.kind}")
-        div, dist, inc = divergence_of(obs)
-        a2.append({"domain": domain, "divergence": div, "distribution": dist,
-                   "inconclusive": inc})
-        print(f"  -> A2 divergence {div} {dist}")
+        if obs:
+            div, dist, inc = divergence_of(obs)
+            a2.append({"domain": domain, "divergence": div, "distribution": dist,
+                       "inconclusive": inc})
+            print(f"  -> A2 divergence {div} {dist}")
+        (OUT / "arms.json").write_text(json.dumps(
+            {**log, "A0_repeat": a1_cold, "A2": a2}, indent=2, default=str))
 
-    log["A1_cold"], log["A1_hot"], log["A2"] = a1_cold, a1_hot, a2
+    log["A0_repeat"], log["A2"] = a1_cold, a2
     (OUT / "arms.json").write_text(json.dumps(log, indent=2, default=str))
 
     # ---------------------------------------------------------------------- A5
@@ -149,21 +204,28 @@ def main() -> int:
     bc = Chain("testnet-bradbury")
     baddr, fresh = ensure_deployed(bc)
     print(f"bradbury contract {baddr}{' (new)' if fresh else ''}")
-    a5 = []
+    a5 = list(prior.get("A5", []))
+    done_a5 = {x["domain"] for x in a5}
     for domain in A5_DOMAINS:
+        if domain in done_a5:
+            print(f"  {domain}: already measured, skipping")
+            continue
         spec = AgreementSpec(rule_text=PAIRS[domain][0], label=f"pair_{domain}_loose",
                              domain=domain)
         probe = domain_probes(domain)[0]
         if not bc.read(baddr, "get_rule", [spec.rule_hash]):
-            bc.write(baddr, "register_rule", [spec.rule_hash, spec.normalized])
+            register_retry(bc, baddr, "register_rule", [spec.rule_hash, spec.normalized])
         if not bc.read(baddr, "get_probe", [probe.probe_id]):
-            bc.write(baddr, "register_probe", [probe.probe_id, probe.canonical_scenario])
+            register_retry(bc, baddr, "register_probe",
+                           [probe.probe_id, probe.canonical_scenario])
         res = run_consensus(bc, baddr, spec.rule_hash, probe.probe_id, rotations=0)
         d = res.to_dict()
         a5.append({"domain": domain, "vote_divergence": d["vote_divergence"],
                    "raw": d["raw"]})
         print(f"  {domain:10s} vote_divergence={d['vote_divergence']} "
               f"status={d['raw'].get('status_name')} result={d['raw'].get('result_name')}")
+        log["A5"] = a5
+        (OUT / "arms.json").write_text(json.dumps(log, indent=2, default=str))
     log["A5"] = a5
     (OUT / "arms.json").write_text(json.dumps(log, indent=2, default=str))
     print(f"\nwrote {OUT / 'arms.json'}")

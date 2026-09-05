@@ -174,3 +174,88 @@ circular rule produces unanimous `INSUFFICIENT`, which is a low divergence numbe
 a correct detection. This is the clearest evidence so far that `INSUFFICIENT` had to
 be in the decision vocabulary — without it those four clauses would have forced
 invented verdicts and shown up as noise.
+
+## C5 and C6 — the remaining arms
+
+`A0` repeat (same model, same probe, 5×), `A2` paraphrase (same model, three
+meaning-preserving rewrites of the probe, facts byte-identical) on three domains;
+`A5` on Bradbury's own committee for all six pair domains.
+
+| component | value | what it is |
+|---|---|---|
+| `A0` self-consistency, main run | **0.0** | 323 observations; no model failed to reproduce its own decision |
+| `A0` repeat, direct | **0.0** | 5 repeats × 3 domains, all unanimous |
+| `A1` temperature stress | **unmeasurable** | see below |
+| `A2` prompt paraphrase | **0.0** | 3 paraphrases × 3 domains, all unanimous |
+| `A3` cross-model, forced answer | 0.0333 | the control stratum: six models, answer forced by the clause |
+| `A4` cross-model, adversarial (loose) | 0.2167 | what a report actually states |
+| `A4` cross-model, adversarial (pathological) | 0.2333 | |
+
+**`A1` is not measurable on studionet.** Every provider entry whose config exposes
+`temperature` reports `is_model_available: false`; the entries that work (the
+`openrouter` routes) expose an empty config with no temperature knob. So the
+pre-registered C5 formula — `A4 − max(A1, A2, A3)` — **has no value**, and C5 is
+reported as *not evaluable as written*, plus a clearly-labelled substituted version
+with `A1` replaced by `A0`:
+
+    residual = 0.2167 − max(0.0, 0.0, 0.0333) = 0.1834   > every mechanical component
+
+Substituted C5 passes. The pre-registered C5 does not exist. Both are recorded.
+
+The striking part is not the arithmetic. **Repetition and paraphrase both produced
+exactly zero divergence.** Rewording a probe three ways, keeping the facts identical,
+did not move a single decision on any of the three domains. Whatever the panel is
+responding to, it is not prose surface.
+
+**C6 fails, and not because the correlation was weak.** Bradbury's live committee
+returned `vote_divergence = 0.0` on all five measurable domains — unanimous every
+time, on the same clauses where the pinned panel diverged 0.083 to 0.467. With zero
+variance on one axis there is no rank correlation to compute, so ρ is undefined and
+the criterion cannot be met. Two readings, both worth stating: the network's own
+committee may be more homogeneous than a deliberately diverse pinned panel, and a
+vote (agree/disagree with one leader) is a coarser instrument than a decision
+distribution. `sim_config` is Studio-only, so the live arm cannot be made to yield a
+distribution — this is a ceiling on the method, not a bug in the run.
+
+## Verdict, with the pre-registered branches applied as written
+
+| # | criterion | result |
+|---|---|---|
+| C1 | controls at the floor | **PASS** (0.0333 ≤ 0.05) |
+| C2 | pathological detected | **PASS** (5/5) |
+| C3 | matched pairs separate | **FAIL** (3/6 directional, p = 0.844) |
+| C4 | discriminability | **PASS** (AUC 0.787, CI [0.585, 0.938]) |
+| C5 | attribution | **not evaluable as pre-registered**; substituted version passes (residual 0.1834) |
+| C6 | transfer | **FAIL** (ρ undefined; live committee unanimous everywhere) |
+
+**The study does not pass.** All six were required.
+
+Two branches fire:
+
+1. **"6 fails → keep the score as a studionet lab instrument only, and say so wherever
+   it appears."** Applied. Every Split Score in this repo is labelled a studionet
+   number, and the README and reports say so.
+2. **"3 fails while 1, 2, 4, 5 pass → the corpus is at fault, not the instrument. One
+   disclosed corpus revision is permitted, then a re-run. Only one."** Its
+   precondition is met only under the *substituted* C5 — and it is **not applied**,
+   because the pre-registration permits exactly one disclosed corpus revision and one
+   was already spent on the control set before the study ran. The allowance is
+   exhausted. The pair corpus does not get rewritten and re-run, even though the
+   length confound is an obvious candidate fix and even though a re-run would probably
+   look better. That is what pre-registration is for.
+
+### What stands
+
+- **Split Score is not validated for ranking two drafts of the same clause.** C3
+  failed and cannot be retried under this pre-registration. Brightline must not be
+  presented as a tool that tells you which of two rewrites is better.
+- **Split Score is supported as a discriminator between forced-answer rules and
+  judgment-requiring rules.** Controls 0.0333 against loose 0.2167 and pathological
+  0.2333, AUC 0.787 with a CI excluding chance.
+- **The mechanical floor is empirically zero.** Repetition 0.0, paraphrase 0.0, 323
+  self-consistency observations without a single failure. When this instrument reports
+  divergence, it is not reporting noise. That was the load-bearing question and it has
+  a clean answer.
+- **Transfer to a live committee is unevaluated, not demonstrated.**
+- **The counterexample generator is unaffected by every branch above and ships
+  regardless.** It never depended on the score being calibrated.

@@ -1,0 +1,90 @@
+{
+  "schema": "brightline.calibration.final/1",
+  "preregistration": "experiments/PREREGISTRATION.md",
+  "criteria": {
+    "C1": true,
+    "C2": true,
+    "C3": false,
+    "C4": true,
+    "C5_preregistered": null,
+    "C5_substituted": true,
+    "C6": false
+  },
+  "C5": {
+    "preregistered_evaluable": false,
+    "preregistered_note": "formula is A4 - max(A1, A2, A3); A1 is unmeasurable on studionet, so the pre-registered criterion has no value",
+    "substituted": {
+      "formula": "A4 - max(A0_repeat, A2, A3), with A1 replaced by A0",
+      "residual": 0.1834,
+      "components": {
+        "A0_self_consistency_main_run": 0.0,
+        "A0_repeat_same_model": 0.0,
+        "A1_temperature_stress": null,
+        "A1_unmeasurable_reason": "no studionet model is both is_model_available and exposes a temperature config key; openrouter routes work but expose an empty config",
+        "A2_prompt_paraphrase": 0.0,
+        "A3_cross_model_forced_answer": 0.0333,
+        "A4_cross_model_adversarial_loose": 0.2167,
+        "A4_cross_model_adversarial_pathological": 0.2333
+      },
+      "pass": true
+    }
+  },
+  "C6": {
+    "n_paired": 5,
+    "rows": [
+      {
+        "domain": "sla",
+        "A4_panel_divergence": 0.1666,
+        "A5_vote_divergence": 0.0
+      },
+      {
+        "domain": "content",
+        "A4_panel_divergence": 0.0833,
+        "A5_vote_divergence": 0.0
+      },
+      {
+        "domain": "milestone",
+        "A4_panel_divergence": 0.3333,
+        "A5_vote_divergence": 0.0
+      },
+      {
+        "domain": "delivery",
+        "A4_panel_divergence": 0.0833,
+        "A5_vote_divergence": 0.0
+      },
+      {
+        "domain": "refund",
+        "A4_panel_divergence": 0.4667,
+        "A5_vote_divergence": 0.0
+      }
+    ],
+    "spearman_rho": null,
+    "note": "y has zero variance -- every live-committee observation is identical, so no rank correlation exists to compute",
+    "threshold": 0.6,
+    "pass": false,
+    "caveat": "A4 is a decision distribution over six pinned models; A5 is the share of a live committee objecting to one leader. sim_config is Studio-only, so these are different quantities and the correlation is weak evidence at best."
+  },
+  "branches_fired": [
+    {
+      "trigger": "6 fails",
+      "action": "keep the score as a studionet lab instrument only, and say so wherever it appears"
+    },
+    {
+      "trigger": "3 fails while 1, 2, 4, 5 pass",
+      "precondition_met": true,
+      "precondition_note": "met only under the substituted C5; the pre-registered C5 has no value",
+      "action": "one disclosed corpus revision permitted, then a re-run",
+      "allowance_remaining": 0,
+      "applied": false,
+      "why_not_applied": "the pre-registration permits exactly one disclosed corpus revision and one was already spent on the control set before the study ran ('Corpus revision 1'). The allowance is exhausted, so the pair set may not be rewritten and re-run under this pre-registration."
+    }
+  ],
+  "study_passes": false,
+  "standing_conclusion": [
+    "Split Score is NOT validated for ranking two drafts of the same clause: C3 failed (3 of 6 pairs directional, p = 0.844) and the corpus-revision allowance is exhausted, so it cannot be retried under this pre-registration.",
+    "Split Score IS supported as a discriminator between forced-answer rules and judgment-requiring rules: controls 0.0333 against loose 0.2167 and pathological 0.2333, AUC 0.7869 CI [0.5852, 0.9375].",
+    "The mechanical floor is empirically zero: within-model repetition and meaning-preserving paraphrase both produced 0.0 divergence, and no model in 323 self-consistency observations failed to reproduce its own decision.",
+    "Per the C6 branch the score is labelled a studionet lab instrument. The live Bradbury committee agreed unanimously on every probe measured, so transfer is unevaluated rather than demonstrated.",
+    "The counterexample generator is unaffected by every branch above and ships regardless."
+  ]
+}

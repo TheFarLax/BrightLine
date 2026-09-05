@@ -1,5 +1,5 @@
 {
-  "hash": "0x9567d904e96bf040cb3a4567f0f52608c4a665b41fc21612fe5205f2eeddc4ca",
+  "hash": "0x0e44b2b764f9506c5fdc57b0d04233166adf603eca44e501faac94acf1b34879",
   "from_address": "0xCA71D5D065833919207316a62A61b599639500f0",
   "to_address": "0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7",
   "data": {
@@ -178,14 +178,14 @@
   "consensus_data": {
     "error": "max_recovery_cycles_exceeded",
     "recovery_count": 3,
-    "max_recovery_exhausted_at": 1788587395
+    "max_recovery_exhausted_at": 1788591597
   },
-  "gaslimit": 629,
-  "nonce": 629,
+  "gaslimit": 663,
+  "nonce": 663,
   "r": null,
   "s": null,
   "v": null,
-  "created_at": "2026-09-05T05:49:47.429328+00:00",
+  "created_at": "2026-09-05T06:58:30.737725+00:00",
   "leader_only": true,
   "execution_mode": "LEADER_ONLY",
   "origin_address": "0xCA71D5D065833919207316a62A61b599639500f0",
@@ -212,20 +212,20 @@
         "model": "gpt-5.1",
         "stake": 10,
         "config": {
-          "temperature": 0.0
+          "temperature": 0.9
         },
         "provider": "openai"
       }
     ]
   },
   "value_credited": false,
-  "current_timestamp": "1788587397",
+  "current_timestamp": "1788591599",
   "sender": "0xCA71D5D065833919207316a62A61b599639500f0",
   "recipient": "0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7",
   "tx_slot": "0",
-  "created_timestamp": "1788587387",
+  "created_timestamp": "1788591510",
   "random_seed": "0x0000000000000000000000000000000000000000000000000000000000000000",
-  "tx_id": "0x9567d904e96bf040cb3a4567f0f52608c4a665b41fc21612fe5205f2eeddc4ca",
+  "tx_id": "0x0e44b2b764f9506c5fdc57b0d04233166adf603eca44e501faac94acf1b34879",
   "read_state_block_range": {
     "activation_block": "0",
     "processing_block": "0",
