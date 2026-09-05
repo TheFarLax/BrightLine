@@ -1,0 +1,14 @@
+{
+  "name": "brightline-frontend-tests",
+  "private": true,
+  "type": "module",
+  "description": "Browser tests for the Brightline viewer. The viewer itself has no build step and no runtime dependencies; playwright is only here so the frontend can be exercised in a real browser.",
+  "scripts": {
+    "test:receipt": "node tests/frontend/receipt_test.mjs",
+    "test:render": "node tests/frontend/render_check.mjs",
+    "test:browser": "node tests/frontend/browser_test.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

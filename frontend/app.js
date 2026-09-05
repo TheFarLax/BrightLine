@@ -13,6 +13,8 @@
  *  - The tau threshold is a neutral 1px reference rule, not a second hue.
  */
 
+import { mountWallet, onWalletChange } from "./components/wallet.js";
+
 const $ = (sel) => document.querySelector(sel);
 const fmt = (v, d = 4) => (v === null || v === undefined ? "n/a" : Number(v).toFixed(d));
 const pct = (v) => (v === null || v === undefined ? 0 : Math.max(0, Math.min(1, v)) * 100);
@@ -160,6 +162,20 @@ function render(r, diff) {
 }
 
 async function boot() {
+  // The wallet header owns network selection and proves the read client works before
+  // any report is rendered. A failure there must not stop the reports from loading:
+  // the committed artifacts are readable with no chain and no wallet at all.
+  try {
+    await mountWallet($("#wallet"));
+    onWalletChange((s) => {
+      if (s.error) console.warn("[brightline]", s.error);
+    });
+  } catch (e) {
+    $("#wallet").innerHTML =
+      `<div class="bar err-line">wallet header unavailable: ${String(e.message)}` +
+      ` — reports below still work</div>`;
+  }
+
   const themeBtn = $("#theme");
   themeBtn.addEventListener("click", () => {
     const root = document.documentElement;

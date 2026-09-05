@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Brightline — agreement fuzzer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232a78d6'/%3E%3Crect x='4' y='7' width='8' height='2' rx='1' fill='white'/%3E%3C/svg%3E">
 <style>
   .viz-root {
     color-scheme: light;
@@ -123,6 +124,23 @@
          border: 1px solid var(--border); border-left: 3px solid var(--series-1);
          padding: 14px 16px; border-radius: 6px; }
   .foot { margin-top: 44px; font-size: 0.82rem; color: var(--text-muted); }
+
+  /* wallet header */
+  #wallet { background: var(--surface-1); border: 1px solid var(--border);
+            border-radius: 8px; padding: 10px 14px; margin-bottom: 22px; }
+  #wallet .bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #wallet .bar.sub { margin-top: 8px; padding-top: 8px;
+                     border-top: 1px solid var(--border); }
+  #wallet .grow { flex: 1 1 auto; }
+  #wallet .note { font-size: 0.78rem; color: var(--text-muted); }
+  #wallet .note a { color: var(--text-secondary); }
+  #wallet .err-line { margin-top: 8px; font-size: 0.82rem; color: var(--text-primary);
+                      border-left: 3px solid var(--series-1); padding-left: 10px; }
+  .pill { font-size: 0.8rem; padding: 3px 9px; border-radius: 999px;
+          border: 1px solid var(--border); color: var(--text-secondary);
+          font-family: ui-monospace, monospace; }
+  .pill.ok { border-color: var(--series-1); color: var(--text-primary); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 </style>
 </head>
 <body>
@@ -142,6 +160,8 @@
     <b>counterexample</b>, not the number.
   </div>
 
+  <div id="wallet"><div class="bar"><span class="note">connecting…</span></div></div>
+
   <div class="row">
     <select id="pick"></select>
     <button id="theme" type="button">Toggle theme</button>
@@ -155,6 +175,6 @@
   </div>
 </div>
 </div>
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

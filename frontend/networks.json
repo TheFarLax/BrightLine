@@ -1,0 +1,102 @@
+{
+  "schema": "brightline.networks/1",
+  "default": "studionet",
+  "networks": {
+    "localnet": {
+      "label": "localnet",
+      "js_chain": "localnet",
+      "rpc": "http://127.0.0.1:4000/api",
+      "chain_id": 61999,
+      "api": "studio",
+      "faucet": "sim",
+      "explorer_tx": null,
+      "wallet_writes": true,
+      "wallet_note": "",
+      "supports_sim_config": true,
+      "contracts": {
+        "probe": null,
+        "registry": null,
+        "escrow": null
+      },
+      "usable": false
+    },
+    "studionet": {
+      "label": "studionet",
+      "js_chain": "studionet",
+      "rpc": "https://studio.genlayer.com/api",
+      "chain_id": 61999,
+      "api": "studio",
+      "faucet": "sim",
+      "explorer_tx": "https://explorer-studio.genlayer.com/tx/",
+      "wallet_writes": true,
+      "wallet_note": "",
+      "supports_sim_config": true,
+      "contracts": {
+        "probe": {
+          "address": "0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7",
+          "code_hash": "0x134173c215929e989a00ff01bb5252d15cbdf8cd647db703e20012b936f8e2ae",
+          "runner": "",
+          "current": true
+        },
+        "registry": {
+          "address": "0x8a3476D6c84cea489d4Eb9A0be744fe403560196",
+          "code_hash": "0x10df45a06b2f8d28ef133070b77cfd891a2cbad5ba0264351437ef94b16ed1d9",
+          "runner": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
+          "current": true
+        },
+        "escrow": {
+          "address": "0x3826C2374fBDBcb8a248e0523eF1f325b3F5A590",
+          "code_hash": "0x6a5dec24e5cb4972dc2b1f2d7535705d18a888fab1d5a4b6a4e2ea87c4b5c55b",
+          "runner": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
+          "current": true
+        }
+      },
+      "usable": true
+    },
+    "testnet-bradbury": {
+      "label": "testnet-bradbury",
+      "js_chain": "testnetBradbury",
+      "rpc": "https://rpc-bradbury.genlayer.com",
+      "chain_id": 4221,
+      "api": "node",
+      "faucet": "external",
+      "explorer_tx": "https://explorer-bradbury.genlayer.com/tx/",
+      "wallet_writes": false,
+      "wallet_note": "CLI-only for now: genlayer-py needed an explicit gas limit to land a write here and genlayer-js is unverified on this network",
+      "supports_sim_config": false,
+      "contracts": {
+        "probe": {
+          "address": "0xebd5A75F832985C3e3ddeFe2f60c7B7eA97C3880",
+          "code_hash": "0x134173c215929e989a00ff01bb5252d15cbdf8cd647db703e20012b936f8e2ae",
+          "runner": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
+          "current": true
+        },
+        "registry": null,
+        "escrow": null
+      },
+      "usable": false
+    },
+    "testnet-asimov": {
+      "label": "testnet-asimov",
+      "js_chain": "testnetAsimov",
+      "rpc": "https://rpc-asimov.genlayer.com",
+      "chain_id": 4221,
+      "api": "node",
+      "faucet": "external",
+      "explorer_tx": "https://explorer-asimov.genlayer.com/tx/",
+      "wallet_writes": false,
+      "wallet_note": "untested",
+      "supports_sim_config": false,
+      "contracts": {
+        "probe": null,
+        "registry": null,
+        "escrow": null
+      },
+      "usable": false
+    }
+  },
+  "notes": {
+    "wallet_snap": "npm:genlayer-wallet-plugin (MetaMask Snap)",
+    "scope": "Split Score is an experimental studionet lab instrument; it is never a gating input. The escrow gates on published-report existence plus the payer's worst-counterexample tolerance."
+  }
+}

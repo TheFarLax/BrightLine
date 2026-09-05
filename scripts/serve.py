@@ -66,6 +66,11 @@ def main() -> int:
     ap.add_argument("--index", action="store_true", help="rebuild the index and exit")
     args = ap.parse_args()
 
+    # Keep the browser's view of deployments in step with the CLI's record.
+    import subprocess
+    subprocess.run([sys.executable, str(ROOT / "scripts" / "export_frontend_config.py")],
+                   check=False)
+
     index = build_index()
     print(f"indexed {len(index['reports'])} report(s)"
           f"{' + retest' if index['retest'] else ''}")
