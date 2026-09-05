@@ -93,3 +93,24 @@ observation. `A1` and `A2` are run only on the models whose studionet config exp
 - The panel excludes `x-ai/grok-4` for the reason recorded in `PANEL_EXCLUDED`.
 - Studionet only for A0–A4. Every number is a studionet number unless labelled A5.
 - Nothing here predicts human disputes or claims anything about fairness.
+
+---
+
+## Corpus revision 1 — disclosed, made before the study ran
+
+A one-clause smoke run (control #0, bounty) split the panel 4–2 and would have
+failed criterion 1. Diagnosis from the dissenting reasons: the control referenced
+*"the runner named in the listing"*, and the probes never identify which runner that
+is. Claude-sonnet-4.5 and kimi-k2.5 both returned `INSUFFICIENT` saying exactly that.
+The clause was objective in the abstract and undecidable against its own probes, so
+it was not a control.
+
+All ten controls were rewritten to key off fact values the probes actually record,
+with an explicit default when a fact is absent and an explicit irrelevance clause, so
+each is forced on both probes of its domain. No full-corpus result had been produced
+or observed at the time of this change; the only data seen was the single smoke clause
+above, and its raw output is in `experiments/E6_calibration/`.
+
+This is the one disclosed revision. Thresholds are unchanged. If the controls fail
+again, that is a criterion-1 halt and the instrument — not the corpus — is the
+suspect.

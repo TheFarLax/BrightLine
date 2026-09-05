@@ -1,0 +1,316 @@
+{
+  "schema": "brightline.calibration/1",
+  "preregistration": "experiments/PREREGISTRATION.md",
+  "provenance": {
+    "network": "studionet",
+    "contract_address": "0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7",
+    "runner_depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
+    "panel_models": [
+      "openai/gpt-5.1",
+      "anthropic/claude-sonnet-4.5",
+      "google/gemini-3-flash-preview",
+      "deepseek/deepseek-v3.2",
+      "moonshotai/kimi-k2.5",
+      "qwen/qwen3-235b-a22b-2507"
+    ],
+    "tau": 0.2,
+    "n_clauses": 1,
+    "self_consistency_observations": 12,
+    "wall_seconds": 197.4,
+    "generated_at": "2026-09-05T02:35:33Z"
+  },
+  "results": {
+    "noise_floor_A0": 0.0,
+    "strata": {
+      "control": {
+        "n": 1,
+        "mean": 0.25,
+        "max": 0.25,
+        "min": 0.25
+      }
+    },
+    "inconclusive_by_stratum": {
+      "control": 0.0
+    },
+    "criteria": {
+      "C1_controls_at_floor": {
+        "pass": false,
+        "control_mean": 0.25,
+        "budget": 0.05
+      },
+      "C2_pathological_detected": {
+        "pass": false,
+        "detail": []
+      },
+      "C3_pairs_separate": {
+        "pass": false,
+        "directional": 0,
+        "n_pairs": 0,
+        "wilcoxon_w": 0.0,
+        "p_two_sided": 1.0,
+        "rows": []
+      },
+      "C4_discriminability": {
+        "pass": false,
+        "auc": null,
+        "bootstrap_ci95": null,
+        "n_pos": 0,
+        "n_neg": 1
+      },
+      "C5_attribution": {
+        "pass": null,
+        "note": "A1/A2 subset not run in this pass; A3 and A4 are not separable with two probes per clause. Cross-model divergence vs the A0 floor is reported instead."
+      },
+      "C6_transfer_A5": {
+        "pass": null,
+        "note": "Bradbury arm not included in this pass."
+      }
+    },
+    "verdict": "HALT -- criterion 1 failed: objective controls did not sit at the noise floor, so the instrument is broken and no number from it is interpretable."
+  },
+  "clauses": [
+    {
+      "kind": "clause",
+      "id": "control_00_bounty",
+      "stratum": "control",
+      "domain": "bounty",
+      "pair": null,
+      "rule_hash": "0x9cbc3008208a66276d593aabf6320c48671efb09ca74d472b1757f0153a0e307",
+      "clause_divergence": 0.25,
+      "n_measurable_probes": 2,
+      "unanimous_insufficient_probes": 0,
+      "n_observations": 12,
+      "n_inconclusive": 0
+    }
+  ],
+  "probes": [
+    {
+      "clause_id": "control_00_bounty",
+      "probe_id": "0x60ac91b23007a0b37545316c5eb725493e69ad9ae7c394aa3820ec178d3bd08b",
+      "probe_index": 0,
+      "family": "conflicting_evidence",
+      "detail": {
+        "probe_id": "0x60ac91b23007a0b37545316c5eb725493e69ad9ae7c394aa3820ec178d3bd08b",
+        "rule_hash": "0x9cbc3008208a66276d593aabf6320c48671efb09ca74d472b1757f0153a0e307",
+        "channel": "PANEL",
+        "distribution": {
+          "ACCEPT": 4,
+          "INSUFFICIENT": 2
+        },
+        "divergence": 0.3333,
+        "vote_divergence": 0.0,
+        "self_split_rate": 0.0,
+        "net_divergence": 0.3333,
+        "n_valid": 6,
+        "n_inconclusive": 0,
+        "observations": [
+          {
+            "label": "openai/gpt-5.1@default",
+            "model": "openai/gpt-5.1",
+            "kind": "AGREE",
+            "decision": "ACCEPT",
+            "status": "OK",
+            "confidence": 94,
+            "reason": "The rule says to pay if the runner named in the listing reports zero failing checks and that runner's report is the only input; the facts show the project's first automated runner reports all checks green, and the other failing runner is not specified as the named one.",
+            "tx": "0x6eb445f516a69ccae1fc772067e32b10e6cf07eeccee8aec3321a631c7730a35",
+            "tx_status": "ACCEPTED",
+            "seconds": 9.0,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "anthropic/claude-sonnet-4.5@default",
+            "model": "anthropic/claude-sonnet-4.5",
+            "kind": "AGREE",
+            "decision": "INSUFFICIENT",
+            "status": "OK",
+            "confidence": 95,
+            "reason": "The rule requires payment if 'the runner named in the listing' reports zero failing checks, and states 'That runner's report is the only input.' The facts show two runners but do not identify which single runner is 'named in the listing,' making it impossible to determine which runner's report is authoritative under the rule.",
+            "tx": "0xeeeff77b4e46721e47828b11edc0ba94de7749090fa1872decb683d9f8f0205b",
+            "tx_status": "FINALIZED",
+            "seconds": 28.3,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "google/gemini-3-flash-preview@default",
+            "model": "google/gemini-3-flash-preview",
+            "kind": "AGREE",
+            "decision": "ACCEPT",
+            "status": "OK",
+            "confidence": 100,
+            "reason": "The rule mandates payment if the 'runner named in the listing' reports zero failing checks. Since 'runner_one' passed and the second runner's failure is from a separate source, the specific condition for payment is met.",
+            "tx": "0x24fdd599c7296041ccd594c074040e69085ca26cd22f44ce74ce067b9d9466b0",
+            "tx_status": "FINALIZED",
+            "seconds": 8.8,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "deepseek/deepseek-v3.2@default",
+            "model": "deepseek/deepseek-v3.2",
+            "kind": "AGREE",
+            "decision": "ACCEPT",
+            "status": "OK",
+            "confidence": 95,
+            "reason": "The rule states 'Pay the bounty if the runner named in the listing reports zero failing checks on the contributor's final commit. That runner's report is the only input.' The facts show runner_one reports 'pass' (zero failing checks), and runner_two's report is irrelevant per the rule.",
+            "tx": "0x586e58ec90c7702cb44e28996c991eb32890b5f8f34eec94249bf13ad0a3200b",
+            "tx_status": "FINALIZED",
+            "seconds": 12.6,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "moonshotai/kimi-k2.5@default",
+            "model": "moonshotai/kimi-k2.5",
+            "kind": "AGREE",
+            "decision": "INSUFFICIENT",
+            "status": "OK",
+            "confidence": 100,
+            "reason": "The rule makes payment contingent on the report of 'the runner named in the listing,' but the facts do not specify whether runner_one or runner_two is that designated runner, so applying the rule would require supplying a missing source of truth.",
+            "tx": "0xfada56b6f1282fd3cf4572b69711e8a20345c94037872d89a586e5cb7c7b610c",
+            "tx_status": "ACCEPTED",
+            "seconds": 36.7,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "qwen/qwen3-235b-a22b-2507@default",
+            "model": "qwen/qwen3-235b-a22b-2507",
+            "kind": "AGREE",
+            "decision": "ACCEPT",
+            "status": "OK",
+            "confidence": 95,
+            "reason": "The rule states payment depends solely on the runner named in the listing reporting zero failing checks on the final commit. The facts indicate 'runner_one' is the relevant runner and it reported 'pass', meaning zero failing checks. The failure from runner_two is irrelevant as the rule specifies only the named runner's report matters.",
+            "tx": "0xc912f66cf1ac263e363aef5cd2c76cd1cafe8b151ef71913b14d35f46943c08f",
+            "tx_status": "FINALIZED",
+            "seconds": 9.8,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          }
+        ],
+        "raw": {}
+      }
+    },
+    {
+      "clause_id": "control_00_bounty",
+      "probe_id": "0xd7ad8e5e615b7d3436ecebf121a3de94e22ecc293fd33fbebd7aed6f127870b2",
+      "probe_index": 1,
+      "family": "partial_completion",
+      "detail": {
+        "probe_id": "0xd7ad8e5e615b7d3436ecebf121a3de94e22ecc293fd33fbebd7aed6f127870b2",
+        "rule_hash": "0x9cbc3008208a66276d593aabf6320c48671efb09ca74d472b1757f0153a0e307",
+        "channel": "PANEL",
+        "distribution": {
+          "ACCEPT": 5,
+          "INSUFFICIENT": 1
+        },
+        "divergence": 0.1667,
+        "vote_divergence": 0.0,
+        "self_split_rate": 0.0,
+        "net_divergence": 0.1667,
+        "n_valid": 6,
+        "n_inconclusive": 0,
+        "observations": [
+          {
+            "label": "openai/gpt-5.1@default",
+            "model": "openai/gpt-5.1",
+            "kind": "AGREE",
+            "decision": "ACCEPT",
+            "status": "OK",
+            "confidence": 96,
+            "reason": "The rule states: 'Pay the bounty if the runner named in the listing reports zero failing checks... Any failing check means no payment.' The facts state 'checks: pass', so the condition of zero failing checks is satisfied regardless of unresolved reproduction paths.",
+            "tx": "0xf877b92960e71bdef4a3b2307e104b26a1f17fc9f6f4ec2b1ab82096942e545d",
+            "tx_status": "FINALIZED",
+            "seconds": 8.8,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "anthropic/claude-sonnet-4.5@default",
+            "model": "anthropic/claude-sonnet-4.5",
+            "kind": "AGREE",
+            "decision": "ACCEPT",
+            "status": "OK",
+            "confidence": 95,
+            "reason": "The rule requires payment if the named runner reports zero failing checks on the final commit. The facts state that automated checks pass, which means zero failing checks were reported.",
+            "tx": "0x4199c8a55fd6a0b199cdda979da70a7c48278205ac4892b2298a579870c7002a",
+            "tx_status": "FINALIZED",
+            "seconds": 8.6,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "google/gemini-3-flash-preview@default",
+            "model": "google/gemini-3-flash-preview",
+            "kind": "AGREE",
+            "decision": "ACCEPT",
+            "status": "OK",
+            "confidence": 100,
+            "reason": "The rule states to pay if the runner reports zero failing checks. The facts confirm that automated checks passed.",
+            "tx": "0x39e59509eb9af078a703ff5bef5f825c54e9901eca646ac6aefec55d5a9e7743",
+            "tx_status": "ACCEPTED",
+            "seconds": 9.0,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "deepseek/deepseek-v3.2@default",
+            "model": "deepseek/deepseek-v3.2",
+            "kind": "AGREE",
+            "decision": "INSUFFICIENT",
+            "status": "OK",
+            "confidence": 85,
+            "reason": "The rule requires payment if the runner's report shows zero failing checks on the final commit, and the facts state 'checks pass'. However, the rule is triggered by 'the runner named in the listing', and the facts do not specify if the available 'both_repro_logs' constitute that runner's report, leaving a missing source of truth.",
+            "tx": "0x2240db4d4b40858c2447def4611380456d40c952afc0aa631e754236f570cb84",
+            "tx_status": "ACCEPTED",
+            "seconds": 13.1,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "moonshotai/kimi-k2.5@default",
+            "model": "moonshotai/kimi-k2.5",
+            "kind": "AGREE",
+            "decision": "ACCEPT",
+            "status": "OK",
+            "confidence": 95,
+            "reason": "The rule makes payment contingent solely on the runner's report showing zero failing checks and explicitly declares that report the only input; the facts establish automated checks pass, meeting the condition, while the unresolved second reproduction path is excluded from consideration by the rule's strict input limitation.",
+            "tx": "0x1e3f309e894fef8924135b6c209370ef8d116a983384238e5d95f2a2f7024867",
+            "tx_status": "ACCEPTED",
+            "seconds": 40.0,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          },
+          {
+            "label": "qwen/qwen3-235b-a22b-2507@default",
+            "model": "qwen/qwen3-235b-a22b-2507",
+            "kind": "AGREE",
+            "decision": "ACCEPT",
+            "status": "OK",
+            "confidence": 95,
+            "reason": "The rule requires that the runner named in the listing reports zero failing checks on the contributor's final commit. The facts state that automated checks pass, meaning no failing checks are reported by the runner. The rule does not require resolution of all reproduction paths, only that the runner's report shows zero failing checks.",
+            "tx": "0xa35fa51fe6964921cd1f71367948ca47e15d48162529d7b062f2db9894556098",
+            "tx_status": "FINALIZED",
+            "seconds": 12.6,
+            "note": "result=MAJORITY_AGREE",
+            "self_consistent": true,
+            "attempts": 1
+          }
+        ],
+        "raw": {}
+      }
+    }
+  ]
+}
