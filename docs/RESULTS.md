@@ -83,3 +83,94 @@ about a human court, and not a statement that the agreement is fair. See
 [LIMITATIONS.md](LIMITATIONS.md). One rule and eight probes is a demonstration that
 the instrument resolves interpretive divergence from noise — it is not the
 calibration study, which is still unrun.
+
+---
+
+# E6 calibration study — main run, 2026-09-05
+
+Pre-registered at commit `28f7019`, **before any calibration data existed**. Thresholds
+and failure branches in [../experiments/PREREGISTRATION.md](../experiments/PREREGISTRATION.md)
+were not touched. 27 clauses × 2 probes × 6 models = 324 adjudications on studionet,
+2h 52m wall, raw output in `experiments/E6_calibration/`.
+
+## Strata
+
+| stratum | n | mean divergence | min | max | inconclusive |
+|---|---|---|---|---|---|
+| `control` | 10 | **0.0333** | 0.0 | 0.0833 | 0.017 |
+| `pair_tight` | 6 | 0.1861 | 0.0 | 0.3333 | 0.014 |
+| `pair_loose` | 6 | 0.2167 | 0.0833 | 0.4667 | 0.028 |
+| `pathological` | 5 | 0.2333 | 0.0833 | 0.5 | 0.017 |
+
+**Noise floor (A0) = 0.0** over **323** self-consistency observations. Not one model,
+anywhere in the corpus, failed to reproduce its own decision on a second sample. The
+mechanical floor of this instrument is empirically zero.
+
+## Criteria, as pre-registered
+
+| # | criterion | threshold | observed | result |
+|---|---|---|---|---|
+| C1 | controls at the floor | ≤ floor + 0.05 = 0.05 | 0.0333 | **PASS** |
+| C2 | pathological detected | div ≥ 0.30 **or** unanimous `INSUFFICIENT` on ≥ half its probes | 5 / 5 detected | **PASS** |
+| C3 | matched pairs separate | ≥ 5 of 6 directional **and** Wilcoxon p < 0.05 | 3 of 6, W = 12.0, p = 0.844 | **FAIL** |
+| C4 | discriminability | AUC ≥ 0.75, bootstrap CI excludes 0.5 | AUC 0.787, CI [0.585, 0.938] | **PASS** |
+| C5 | attribution | residual > max(A1, A2, A3) | not evaluated in the main run | pending |
+| C6 | transfer to Bradbury | Spearman ρ ≥ 0.6 | not evaluated in the main run | pending |
+
+**The study does not pass.** The pre-registration requires all six criteria to hold.
+
+**And no failure branch is invocable yet.** The branch for a C3 failure is written as
+*"3 fails while 1, 2, 4, 5 pass"* — it is conditioned on C5, and C5 was never
+evaluated, so it neither passed nor failed. Branch selection literally depends on a
+criterion that does not yet have a value. Running C5 and C6 before invoking anything
+is the only reading of the pre-registration that is faithful to it. Those arms are
+running now; the branch will be applied to the completed set, not to a partial one.
+
+## C3 in detail — and the confound I should have controlled
+
+| pair | loose | tight | Δ (loose − tight) | direction |
+|---|---|---|---|---|
+| refund | 0.4667 | 0.2500 | +0.2167 | as predicted |
+| milestone | 0.3333 | 0.0000 | +0.3333 | as predicted |
+| sla | 0.1666 | 0.0000 | +0.1666 | as predicted |
+| bounty | 0.1667 | 0.2500 | −0.0833 | **reversed** |
+| content | 0.0833 | 0.2833 | −0.2000 | **reversed** |
+| delivery | 0.0833 | 0.3333 | −0.2500 | **reversed** |
+
+Three of six pairs went the wrong way. The obvious confound, which the corpus does not
+control: the tight halves are **4.2× to 7.9× longer** than the loose halves (mean
+6.2×). Specifying a procedure means adding clauses, and added clauses interact. So a
+`Δ < 0` may say "this tight clause is longer and more conditional", not "this tight
+clause is less decidable".
+
+That is the same phenomenon the v1 → v2 re-test surfaced independently, where two
+probes that were nearly clean under the short rule **newly opened** under the long
+one. Two separate experiments now point at it, which makes it a finding about
+rule-writing rather than a quirk: **added specificity adds surface, and the added
+surface can diverge more than the vagueness it replaced.**
+
+## What C4 is and is not
+
+AUC 0.787 with a bootstrap CI excluding 0.5 clears the pre-registered bar. But the
+separation it measures is substantially `control` (0.0333) against everything else,
+not `loose` against `tight` — C3 shows the loose/tight contrast does not separate at
+all. Read C4 as "the instrument distinguishes forced-answer rules from
+judgment-requiring rules", which is real and useful, and **not** as "the instrument
+ranks two drafts of the same clause". The second claim is the one that failed.
+
+## C2 in detail
+
+| clause | divergence | unanimous `INSUFFICIENT` probes | detected via |
+|---|---|---|---|
+| `patho_01_delivery` | 0.5 | 0 | divergence ≥ 0.30 |
+| `patho_03_sla` | 0.25 | 1 | unanimous `INSUFFICIENT` |
+| `patho_00_bounty` | 0.1666 | 1 | unanimous `INSUFFICIENT` |
+| `patho_02_refund` | 0.1666 | 1 | unanimous `INSUFFICIENT` |
+| `patho_04_content` | 0.0833 | 1 | unanimous `INSUFFICIENT` |
+
+Note how C2 was actually satisfied: four of five pathological clauses were caught by
+the panel **agreeing that the rule cannot decide**, not by the panel splitting. A
+circular rule produces unanimous `INSUFFICIENT`, which is a low divergence number and
+a correct detection. This is the clearest evidence so far that `INSUFFICIENT` had to
+be in the decision vocabulary — without it those four clauses would have forced
+invented verdicts and shown up as noise.
