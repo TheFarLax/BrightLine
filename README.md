@@ -98,7 +98,9 @@ brightline/                     spec · adversary · chain · panel · report ·
 scripts/e*.py                   the approval gates, each writing raw evidence
 experiments/                    raw gate output, kept
 reports/                        generated reports + every raw receipt
-frontend/                       dependency-free viewer over the report artifacts
+frontend/                       viewer + settlement dApp (no build step)
+frontend/lib/                   gl.js (genlayer-js clients) · receipt.js · attest.js · render.js
+frontend/components/            wallet.js · tx.js · settlement.js
 docs/VERIFIED_VS_ASSUMED.md     every GenLayer claim and its status
 docs/LIMITATIONS.md             what this does not measure
 ```
@@ -125,6 +127,19 @@ Publish a report and exercise the escrow gate, then view it:
 .venv/bin/python scripts/e8_registry_escrow.py studionet
 .venv/bin/python scripts/serve.py            # http://127.0.0.1:8800/frontend/
 ```
+
+The viewer has two tabs. **Reports** renders the committed artifacts and needs no chain
+and no wallet. **Settlement** reads the registry and escrow live, and — with a wallet —
+publishes a report, opens a deal, and locks funds behind the gate. Both refusal paths
+are one click each: lower the tolerance below the worst published finding, or pick the
+untested rule. Refusals show the contract's own message and leave the deal `OPEN`.
+
+Wallet writes are studionet-only for now. Bradbury is CLI-only until genlayer-js is
+verified there; the UI states that rather than failing silently.
+
+Tests: `.venv/bin/python -m pytest tests/unit tests/direct -q` (66 pass, 3 skip by
+design) · `npm run test:all` (68 JS checks) · `npm run test:settlement` (22 live
+studionet checks through the JS stack).
 
 Bradbury (network truth, `scripts/e3_e4_bradbury.py`) needs a funded account; the
 faucet requires GitHub OAuth plus a Turnstile challenge, so that step is human.

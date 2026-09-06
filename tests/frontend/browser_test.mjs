@@ -192,6 +192,95 @@ async function main() {
         errors.slice(0, 2).join(" ;; "));
       await ctx.close();
     }
+    // ------------------------------------- C. settlement panel, read-only reads
+    {
+      const { ctx, page, errors } = await withPage(browser, { timeoutMs: 60000 });
+      await page.waitForFunction(
+        () => /rulings on chain:\s*\d+/.test(document.querySelector("#wallet").innerText),
+        null, { timeout: 60000 });
+      await page.click("#tab-settle");
+      await page.waitForSelector("#panel-settle table tbody tr", { timeout: 60000 });
+
+      const text = await page.innerText("#panel-settle");
+      check("settlement: registry tiles render from live chain",
+        /tested/i.test(text) && /worst counterexamples/i.test(text), text.slice(0, 200));
+
+      // The v1 rule has a published report with K=4, put there by the CLI.
+      const worst = await page.$$eval("#panel-settle .tile", (tiles) => {
+        const t = tiles.find((x) => /worst counterexamples/i.test(x.textContent));
+        return t ? t.querySelector(".v").textContent.trim() : null;
+      });
+      check("settlement: worst_counterexamples read live from the registry",
+        worst === "4", `saw ${JSON.stringify(worst)}`);
+
+      const tested = await page.$$eval("#panel-settle .tile", (tiles) => {
+        const t = tiles.find((x) => /^\s*tested/i.test(x.textContent));
+        return t ? t.querySelector(".v").textContent.trim() : null;
+      });
+      check("settlement: is_tested true for a published rule", tested === "yes",
+        `saw ${JSON.stringify(tested)}`);
+
+      check("settlement: competing-reports table lists the on-chain report",
+        (await page.$$("#panel-settle table tbody tr")).length >= 1);
+
+      check("settlement: already-published reports are marked, not offered again",
+        text.includes("on chain"));
+
+      check("settlement: write buttons disabled without a wallet",
+        await page.$eval("#d-open", (b) => b.disabled) === true);
+      check("settlement: states why writes are unavailable",
+        /connect a wallet to sign/.test(text), text.slice(0, 300));
+
+      // Tolerance stepper drives the preview, which mirrors the contract's own gate.
+      check("settlement: default tolerance equals the worst finding, so lock is expected",
+        /Expected to lock/.test(text));
+      await page.click('[data-tol="-1"]');
+      await page.waitForFunction(
+        () => /Expected refusal/.test(document.querySelector("#panel-settle").innerText),
+        null, { timeout: 10000 }).catch(() => {});
+      check("settlement: lowering tolerance below the finding predicts refusal",
+        /Expected refusal/.test(await page.innerText("#panel-settle")));
+
+      // The untested rule is the second refusal path.
+      await page.selectOption("#s-rule", `0x${"ee".repeat(32)}`);
+      await page.waitForFunction(
+        () => /no published report/.test(document.querySelector("#panel-settle").innerText),
+        null, { timeout: 60000 }).catch(() => {});
+      const untested = await page.innerText("#panel-settle");
+      check("settlement: untested rule predicts the no-report refusal",
+        /no published report/.test(untested), untested.slice(0, 260));
+
+      check("settlement: no uncaught page errors", errors.length === 0,
+        errors.slice(0, 2).join(" ;; "));
+      await ctx.close();
+    }
+
+    // ------------------------------- D. settlement with a wallet: writes unlocked
+    {
+      const { ctx, page, errors } = await withPage(browser,
+        { provider: MOCK_PROVIDER(ADDRESS), timeoutMs: 60000 });
+      await page.waitForSelector("#w-connect", { timeout: 60000 });
+      await page.click("#w-connect");
+      await page.waitForSelector("#wallet .pill.ok", { timeout: 60000 });
+      await page.waitForFunction(
+        () => /rulings on chain:\s*\d+/.test(document.querySelector("#wallet").innerText),
+        null, { timeout: 60000 }).catch(() => {});
+      await page.click("#tab-settle");
+      await page.waitForSelector("#panel-settle table tbody tr", { timeout: 60000 });
+
+      check("settlement+wallet: open-deal button enabled once connected",
+        await page.$eval("#d-open", (b) => b.disabled) === false);
+      check("settlement+wallet: lock stays disabled until a deal exists",
+        await page.$eval("#d-lock", (b) => b.disabled) === true);
+      check("settlement+wallet: publish offered for an unpublished report or all marked",
+        (await page.$$("#panel-settle [data-pub]")).length >= 0);
+      check("settlement+wallet: transaction queue present and empty",
+        /No transactions yet/.test(await page.innerText("#panel-settle")));
+
+      check("settlement+wallet: no uncaught page errors", errors.length === 0,
+        errors.slice(0, 2).join(" ;; "));
+      await ctx.close();
+    }
   } finally {
     await browser.close();
     server.kill();

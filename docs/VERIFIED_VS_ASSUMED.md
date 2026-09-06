@@ -97,3 +97,16 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 | A reverted contract call shows up as a failed transaction | `[X]` refuted | A `gl.vm.UserError` still yields `ACCEPTED` / `MAJORITY_AGREE` — the validators agree the call failed. The signal is on the leader receipt: `execution_result == "ERROR"` with `result.status == "rollback"`, and `result.payload` carries the UserError text verbatim. `execution_failed()` / `revert_message()` in `brightline/panel.py` |
 | Direct mode can test two interacting contracts | `[X]` refuted | `ImportError: only one contract is allowed`. Cross-contract gate tests skip by design; the gate is verified against real consensus by `scripts/e8_registry_escrow.py` |
 | `sim_config` works on a public testnet | `[X]` | Studio-only. The PANEL channel cannot run on Bradbury, which is why the LIVE arm yields votes rather than a decision distribution — and why C6 had nothing to correlate |
+
+## Frontend / genlayer-js (steps 0-4)
+
+| Claim | Status | Evidence |
+|---|---|---|
+| genlayer-js supports an account-free read client and a provider-backed write client | `[V]` `[E]` | docs *genlayer-js*; `ClientConfig { account?, provider? }` in 1.1.8; live `ruling_count` read in a real Chromium with no wallet present |
+| Wallet signing requires MetaMask **plus the `npm:genlayer-wallet-plugin` Snap** | `[V]` `[E]` partial | `client.connect()` emits `eth_requestAccounts` → `eth_chainId` → `wallet_getSnaps` → `wallet_requestSnaps`, recorded against a mock EIP-1193 provider. **The real Snap install/approval is NOT verified** — no browser extension or display on this host |
+| `wallet_addEthereumChain` / `wallet_switchEthereumChain` are issued by `connect()` | `[V]` in the bundle, `[A]` in practice | Both strings are present in genlayer-js 1.1.8, but neither fired in testing because the mock returned a matching `eth_chainId`. The switch path is unexercised |
+| genlayer-js `readContract` works against studionet | `[E]` | `is_tested`, `worst_counterexamples`, `summary_for_rule`, `get_deal`, `ruling_count` all read correctly |
+| genlayer-js `writeContract` works against studionet, including payable value | `[E]` | 22/22 live settlement checks: publish, open_deal, lock (0.01 GEN), release |
+| genlayer-js `writeContract` works against Bradbury | `[A]` **untested** | genlayer-py needed an explicit gas limit there; `wallet_writes` stays false for Bradbury and the UI says why |
+| A contract revert is invisible in the transaction status via genlayer-js too | `[E]` | Both a refused `lock` and a duplicate `publish` came back `FINALIZED` / `MAJORITY_AGREE` with `execution_result: ERROR`, `result.status: "rollback"`, and the `UserError` text in `result.payload` |
+| The JS and Python attestation projections agree | `[E]` | `tests/unit/test_js_parity.py` — byte-identical across all three committed reports, including Python's `", "` list separator in `tx_hashes_json` |

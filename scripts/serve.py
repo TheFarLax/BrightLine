@@ -39,7 +39,10 @@ def build_index() -> dict:
             "label": (f"{data['rule']['label']} · {m['K']}/{m['N']} counterexamples "
                       f"· {p['probe_set_id']}"),
             "rule_label": data["rule"]["label"],
+            "rule_hash": data["rule"]["rule_hash"],
+            "report_hash": data["report_hash"],
             "probe_set_id": p["probe_set_id"],
+            "adversary_version": p.get("adversary_version"),
             "K": m["K"], "N": m["N"],
             # The re-test table belongs on the baseline report, where the comparison
             # starts; showing it on every report would imply each one is a diff.

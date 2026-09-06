@@ -6,7 +6,10 @@
       "path": "reports/v1_ps_6ce467da9d20c1f2_studionet.json",
       "label": "v1 \u00b7 4/8 counterexamples \u00b7 ps_6ce467da9d20c1f2",
       "rule_label": "v1",
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+      "report_hash": "0x3892c0c0aa6103bd62262bab7f1e2da7907602e1184e562f44ef18d904d366f6",
       "probe_set_id": "ps_6ce467da9d20c1f2",
+      "adversary_version": "adv-v1.0.0",
       "K": 4,
       "N": 8,
       "show_retest": true
@@ -16,7 +19,10 @@
       "path": "reports/v2_fresh_ps_4a8062c5562c47a4_studionet.json",
       "label": "v2 \u00b7 2/8 counterexamples \u00b7 ps_4a8062c5562c47a4",
       "rule_label": "v2",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "report_hash": "0x26a6d9f2ab1587c8c701a6249823e7811feeb245a32b840ebc30ae68f03b12bb",
       "probe_set_id": "ps_4a8062c5562c47a4",
+      "adversary_version": "adv-v1.0.0",
       "K": 2,
       "N": 8,
       "show_retest": false
@@ -26,7 +32,10 @@
       "path": "reports/v2_frozen_ps_6ce467da9d20c1f2_studionet.json",
       "label": "v2 \u00b7 4/8 counterexamples \u00b7 ps_6ce467da9d20c1f2",
       "rule_label": "v2",
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+      "report_hash": "0x648cb01c665b18ca06ec3a6b705b5f4b17f8c036df39fdb8332d3ee7ccf9f7ef",
       "probe_set_id": "ps_6ce467da9d20c1f2",
+      "adversary_version": "adv-v1.0.0",
       "K": 4,
       "N": 8,
       "show_retest": false
