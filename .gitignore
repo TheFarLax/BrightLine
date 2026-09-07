@@ -1,6 +1,19 @@
+# Dependencies — restorable from package.json / requirements
+node_modules/
 .venv/
+
+# Local dev keys and deployment bookkeeping. Never publish.
 .brightline/
+.env
+
+# Build and cache output
 __pycache__/
 *.pyc
 artifacts/
-.env
+frontend/vendor/.entry.mjs
+
+# NOT ignored, deliberately:
+#   frontend/vendor/genlayer-js.js  -- vendored SDK, committed so the dApp has no
+#                                      runtime CDN dependency
+#   reports/raw/**, experiments/**  -- raw receipts and gate output. This is the
+#                                      evidence every claim in docs/ rests on.
