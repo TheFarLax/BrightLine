@@ -8,9 +8,16 @@
     "test:render": "node tests/frontend/render_check.mjs",
     "test:browser": "node tests/frontend/browser_test.mjs",
     "test:settlement": "node tests/frontend/settlement_live.mjs",
-    "test:all": "node tests/frontend/receipt_test.mjs && node tests/frontend/render_check.mjs && node tests/frontend/browser_test.mjs"
+    "test:all": "node tests/frontend/receipt_test.mjs && node tests/frontend/hash_parity.mjs && node tests/frontend/render_check.mjs && node tests/frontend/browser_test.mjs",
+    "test:hash": "node tests/frontend/hash_parity.mjs",
+    "test:quickcheck": "node tests/frontend/quickcheck_live.mjs",
+    "test:live": "node tests/frontend/settlement_live.mjs && node tests/frontend/quickcheck_live.mjs"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "playwright": "^1.56.0"
+  },
+  "dependencies": {
+    "genlayer-js": "1.1.8"
   }
 }

@@ -128,18 +128,31 @@ Publish a report and exercise the escrow gate, then view it:
 .venv/bin/python scripts/serve.py            # http://127.0.0.1:8800/frontend/
 ```
 
-The viewer has two tabs. **Reports** renders the committed artifacts and needs no chain
-and no wallet. **Settlement** reads the registry and escrow live, and — with a wallet —
-publishes a report, opens a deal, and locks funds behind the gate. Both refusal paths
-are one click each: lower the tolerance below the worst published finding, or pick the
-untested rule. Refusals show the contract's own message and leave the deal `OPEN`.
+The viewer has four tabs, and the first two need no chain and no wallet:
+
+- **Reports** — the committed artifacts, counterexamples included.
+- **Agreement** — paste a rule and see its on-chain identity hashed in the browser;
+  browse a frozen probe manifest, its family quotas, and every scenario. Probe ids come
+  from the manifest and are never recomputed in JS.
+- **Quick check** — adjudicate one probe live, N times, against the network's own
+  committee. A demonstration that real adjudication happens. **Not** a cross-model panel:
+  genlayer-js ignores `simConfig`, so the browser cannot pin a model and the network
+  chooses it. Cross-model divergence comes only from the CLI.
+- **Settlement** — live registry and escrow reads, and with a wallet: publish a report,
+  open a deal, set a tolerance, lock. Both refusal paths are one click each — lower the
+  tolerance below the worst published finding, or pick the untested rule. Refusals show
+  the contract's own message and leave the deal `OPEN`.
+
+genlayer-js is vendored into `frontend/vendor/` (`node scripts/vendor_sdk.mjs`) so the
+dApp has no runtime CDN dependency; a dropped CDN sub-request used to kill the wallet
+path outright.
 
 Wallet writes are studionet-only for now. Bradbury is CLI-only until genlayer-js is
 verified there; the UI states that rather than failing silently.
 
 Tests: `.venv/bin/python -m pytest tests/unit tests/direct -q` (66 pass, 3 skip by
-design) · `npm run test:all` (68 JS checks) · `npm run test:settlement` (22 live
-studionet checks through the JS stack).
+design) · `npm run test:all` (96 JS checks incl. a real Chromium run) ·
+`npm run test:live` (26 live studionet checks through the JS stack).
 
 Bradbury (network truth, `scripts/e3_e4_bradbury.py`) needs a funded account; the
 faucet requires GitHub OAuth plus a Turnstile challenge, so that step is human.

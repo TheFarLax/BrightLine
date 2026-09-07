@@ -110,3 +110,16 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 | genlayer-js `writeContract` works against Bradbury | `[A]` **untested** | genlayer-py needed an explicit gas limit there; `wallet_writes` stays false for Bradbury and the UI says why |
 | A contract revert is invisible in the transaction status via genlayer-js too | `[E]` | Both a refused `lock` and a duplicate `publish` came back `FINALIZED` / `MAJORITY_AGREE` with `execution_result: ERROR`, `result.status: "rollback"`, and the `UserError` text in `result.payload` |
 | The JS and Python attestation projections agree | `[E]` | `tests/unit/test_js_parity.py` — byte-identical across all three committed reports, including Python's `", "` list separator in `tx_hashes_json` |
+
+## Steps 5-6 findings
+
+| Claim | Status | Evidence |
+|---|---|---|
+| genlayer-js can pin validator models via `simConfig` | `[X]` **refuted** | `writeContract` has no `simConfig` parameter in 1.1.8 and the string appears nowhere in the bundle. Passing one is silently ignored: requesting kimi / gemini-3-flash / qwen produced grok / gemini / gpt-5.4. **The browser therefore cannot reproduce the PANEL channel at all** — cross-model pinning is CLI-only, because genlayer-py forwards `sim_config` as a second `eth_sendRawTransaction` param |
+| A browser quick check can measure cross-model divergence | `[X]` refuted, by the above | What it measures instead is run-to-run stability of the live committee. Labelled as such in the UI, and it is not a Split Score |
+| The receipt names which model actually answered | `[E]` | `consensus_data.leader_receipt.node_config.primary_model.model`. Live runs showed `openai/gpt-5.4`, `policy:prd-minimax`, `policy:prd-sonnet`, `policy:prd-gpt-5-4` — the network's own choices |
+| Loading genlayer-js from a CDN is safe for a demo | `[X]` refuted | Its published ESM imports `viem` as a bare specifier, so a CDN load fans out into dozens of requests. esm.sh closed one mid-fetch during testing and the wallet path died. Now vendored into `frontend/vendor/` by `scripts/vendor_sdk.mjs` |
+| The SDK and its chains can be bundled separately | `[X]` refuted | Two bundles means two copies of viem, and a chain object from one is not what the other expects — the client silently fails to reach the network. One entry re-exporting both |
+| Studionet answers every browser read | `[X]` refuted | Under load it intermittently returns a rate-limited response with no `Access-Control-Allow-Origin`, which the browser reports as CORS. Reads now retry with backoff, and an unreadable publication check renders as unknown rather than as "not published" |
+| Browser rule hashing matches the CLI | `[E]` | `tests/frontend/hash_parity.mjs` — 20 awkward strings (NBSP, combining marks, ligatures, fullwidth, CJK, emoji, smart quotes), both committed agreements, and the hash inside the published v1 report |
+| Probe ids can be recomputed in JS | `[A]` **deliberately not attempted** | Python's canonical JSON and `JSON.stringify` disagree on key ordering and escaping. Ids are read from the content-addressed manifest, which refuses to load if edited |

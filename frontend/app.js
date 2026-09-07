@@ -6,6 +6,8 @@
 
 import { mountWallet, onWalletChange, walletState } from "./components/wallet.js";
 import { mountSettlement, updateSettlementWallet } from "./components/settlement.js";
+import { mountQuickCheck, updateQuickCheckWallet } from "./components/quickcheck.js";
+import { mountRuleInput } from "./components/ruleinput.js";
 import { esc, renderReport } from "./lib/render.js";
 
 const $ = (sel) => document.querySelector(sel);
@@ -25,26 +27,70 @@ async function boot() {
 
   // Tabs. The settlement panel is mounted lazily on first view so its chain reads do
   // not slow the reports page down.
-  let settleMounted = false;
+  const mounted = new Set();
+  // The selection flows Agreement -> Quick check / Settlement, so it lives here rather
+  // than inside any one component.
+  let selection = null;
   const tabs = [
     ["#tab-reports", "#panel-reports"],
+    ["#tab-rule", "#panel-rule"],
+    ["#tab-quick", "#panel-quick"],
     ["#tab-settle", "#panel-settle"],
   ];
+
+  const probeSets = manifest.probe_sets || [];
+  let manifestBodies = null;
+  const loadProbeSets = async () => {
+    if (manifestBodies) return manifestBodies;
+    manifestBodies = [];
+    for (const entry of probeSets) {
+      try {
+        manifestBodies.push({ ...entry, set: await (await fetch(`../${entry.path}`)).json() });
+      } catch { /* a missing manifest is skipped, not fatal */ }
+    }
+    return manifestBodies;
+  };
   const showTab = async (which) => {
     for (const [btn, panel] of tabs) {
       const on = btn === which;
       $(btn).setAttribute("aria-selected", String(on));
       $(panel).hidden = !on;
     }
-    if (which === "#tab-settle" && !settleMounted) {
-      settleMounted = true;
-      try {
+    if (mounted.has(which)) return;
+    mounted.add(which);
+    try {
+      if (which === "#tab-settle") {
         await mountSettlement($("#panel-settle"),
           { wallet: walletState(), reports: manifest.reports });
-      } catch (e) {
-        $("#panel-settle").innerHTML =
-          `<div class="err">settlement panel failed: ${esc(String(e.message))}</div>`;
+      } else if (which === "#tab-rule") {
+        const sets = await loadProbeSets();
+        const first = manifest.reports[0];
+        const body = first ? await (await fetch(`../${first.path}`)).json() : null;
+        await mountRuleInput($("#panel-rule"), {
+          manifests: sets, reports: manifest.reports,
+          initialText: body?.rule?.rule_text || "",
+          onSelect: (hash, label, set) => {
+            selection = { hash, label, set };
+            // Re-mount the quick check so it picks up the new selection.
+            mounted.delete("#tab-quick");
+            showTab("#tab-quick");
+          },
+        });
+      } else if (which === "#tab-quick") {
+        const sets = await loadProbeSets();
+        const chosen = selection?.set
+          || sets.find((m) => m.probe_set_id === "ps_6ce467da9d20c1f2")?.set
+          || sets[0]?.set;
+        const rule = selection?.hash || manifest.reports[0]?.rule_hash;
+        await mountQuickCheck($("#panel-quick"), {
+          wallet: walletState(), probeSet: chosen, ruleHash: rule,
+          ruleLabel: selection?.label || manifest.reports[0]?.rule_label || "",
+        });
       }
+    } catch (e) {
+      mounted.delete(which);
+      $(which.replace("#tab-", "#panel-")).innerHTML =
+        `<div class="err">panel failed: ${esc(String(e.message))}</div>`;
     }
   };
   for (const [btn] of tabs) $(btn).addEventListener("click", () => showTab(btn));
@@ -58,6 +104,7 @@ async function boot() {
       // The settlement panel reads and writes through the wallet's clients, so it has
       // to follow network switches and connect/disconnect.
       updateSettlementWallet(s);
+      updateQuickCheckWallet(s);
     });
   } catch (e) {
     $("#wallet").innerHTML =

@@ -14,8 +14,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-import { createClient, createAccount } from "/tmp/gljs/node_modules/genlayer-js/dist/index.js";
-import { studionet } from "/tmp/gljs/node_modules/genlayer-js/dist/chains/index.js";
+import { createClient, createAccount } from "genlayer-js";
+import { studionet } from "genlayer-js/chains";
 
 import { publishArgs, reportToAttestation, lockPreview } from "../../frontend/lib/attest.js";
 import { executionFailed, revertMessage, statusKind, statusName } from "../../frontend/lib/receipt.js";

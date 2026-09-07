@@ -30,7 +30,7 @@ const state = {
   reports: [],           // committed report artifacts
   ruleHash: null,
   ruleLabel: "",
-  registry: { tested: false, worst: 0, summary: null, published: {} },
+  registry: { tested: false, worst: 0, summary: null, published: {} },   // published: hash -> true/false/null
   deal: null,            // last deal read from chain
   dealId: null,
   tolerance: 0,
@@ -76,14 +76,17 @@ async function refreshRegistry() {
     state.note = `registry read failed: ${e.message}`;
   }
 
-  // Which committed reports are already on chain, so the publish list is honest.
-  state.registry.published = {};
+  // Which committed reports are already on chain, so the publish list is honest. This
+  // only drives a badge, so a failed probe is recorded as unknown rather than as "not
+  // published" -- claiming the latter would invite a duplicate publish the contract
+  // would then refuse.
   for (const r of state.reports) {
+    if (state.registry.published[r.report_hash] !== undefined) continue;
     try {
       const stored = await read(client, reg.address, "get_report", [r.report_hash]);
       state.registry.published[r.report_hash] = Boolean(JSON.parse(stored || "{}").rule_hash);
     } catch {
-      state.registry.published[r.report_hash] = false;
+      state.registry.published[r.report_hash] = null;   // unknown
     }
   }
 }
@@ -229,13 +232,14 @@ function tile(k, v, note) {
 
 function publishCard() {
   const items = state.reports.map((r, i) => {
-    const done = state.registry.published[r.report_hash];
+    const done = state.registry.published[r.report_hash];   // true / false / null=unknown
     return `<div class="camp">
       <span class="dot"></span>
       <span class="lab">${esc(r.rule_label)} ${r.K}/${r.N}</span>
       <span class="who mono">${esc(r.file)}</span>
-      ${done ? `<span class="pill">on chain</span>`
-             : `<button type="button" data-pub="${i}" ${canWrite() ? "" : "disabled"}>Publish</button>`}
+      ${done === true ? `<span class="pill">on chain</span>`
+        : done === null ? `<span class="pill" title="could not read the registry">?</span>`
+        : `<button type="button" data-pub="${i}" ${canWrite() ? "" : "disabled"}>Publish</button>`}
     </div>`;
   }).join("");
   return `<div class="card">

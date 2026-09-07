@@ -117,6 +117,10 @@
   .prov div { white-space: pre; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
          margin-bottom: 18px; }
+  textarea { width: 100%; font: inherit; font-size: 0.92rem; padding: 10px 12px;
+             border: 1px solid var(--border); border-radius: 6px;
+             background: var(--surface-0); color: var(--text-primary); resize: vertical; }
+  details.card summary { cursor: pointer; font-size: 0.9rem; }
   select, button { font: inherit; font-size: 0.9rem; padding: 6px 10px;
                    border: 1px solid var(--border); border-radius: 6px;
                    background: var(--surface-1); color: var(--text-primary); }
@@ -190,6 +194,8 @@
 
   <div class="tabs" role="tablist">
     <button id="tab-reports" type="button" role="tab" aria-selected="true">Reports</button>
+    <button id="tab-rule" type="button" role="tab" aria-selected="false">Agreement</button>
+    <button id="tab-quick" type="button" role="tab" aria-selected="false">Quick check</button>
     <button id="tab-settle" type="button" role="tab" aria-selected="false">Settlement</button>
     <span class="grow"></span>
     <button id="theme" type="button">Toggle theme</button>
@@ -200,6 +206,8 @@
     <div id="app"><p class="mono">loading…</p></div>
   </section>
 
+  <section id="panel-rule" hidden><p class="mono">loading…</p></section>
+  <section id="panel-quick" hidden><p class="mono">loading…</p></section>
   <section id="panel-settle" hidden><p class="mono">loading…</p></section>
 
   <div class="foot">

@@ -4,9 +4,12 @@
  * and a provider-backed client for writes. Reads must work with no wallet at all --
  * that is what makes the read-only/demo mode real rather than a degraded error state.
  *
- * genlayer-js is loaded from a CDN so the viewer keeps its "clone and open" property
- * with no build step. The tradeoff is explicit: a CDN dependency, and no offline demo.
- * Pin the version; never float it.
+ * genlayer-js is vendored into frontend/vendor/ rather than pulled from a CDN. Its
+ * published ESM imports `viem` as a bare specifier, so a CDN load fans out into dozens
+ * of module requests -- and one dropped request breaks the wallet path, which was
+ * observed in testing when esm.sh closed a connection mid-fetch. The dApp still has no
+ * build step to *run*; `node scripts/vendor_sdk.mjs` is a one-off step to *update* the
+ * SDK, and its output is committed.
  *
  * Wallet writes go through MetaMask plus the `npm:genlayer-wallet-plugin` Snap --
  * `client.connect()` requests the Snap and issues wallet_addEthereumChain /
@@ -15,16 +18,20 @@
  */
 
 const SDK_VERSION = "1.1.8";
-const SDK_URL = `https://esm.sh/genlayer-js@${SDK_VERSION}`;
-const CHAINS_URL = `https://esm.sh/genlayer-js@${SDK_VERSION}/chains`;
+// One bundle for the SDK and its chains: two bundles means two copies of viem, and a
+// chain object from one is not the object the other expects.
+const SDK_URL = "../vendor/genlayer-js.js";
 
 let _sdk = null;
 let _chains = null;
 let _networks = null;
 
 async function sdk() {
-  if (!_sdk) [_sdk, _chains] = await Promise.all([import(SDK_URL), import(CHAINS_URL)]);
-  return { ...(_sdk), chains: _chains };
+  if (!_sdk) {
+    _sdk = await import(SDK_URL);
+    _chains = _sdk.chains;
+  }
+  return { ..._sdk, chains: _chains };
 }
 
 /** Network + deployment config, exported from the CLI's own record. */
@@ -99,9 +106,24 @@ export async function walletClient(net) {
   return { client, address };
 }
 
-/** Read a view method. Never needs a wallet. */
-export async function read(client, address, functionName, args = []) {
-  return client.readContract({ address, functionName, args });
+/**
+ * Read a view method. Never needs a wallet.
+ *
+ * Retried with backoff: the hosted endpoint intermittently rejects browser reads under
+ * load (observed as a CORS-less rate-limit response), and a demo should not show an
+ * empty tile because one of several reads lost a race.
+ */
+export async function read(client, address, functionName, args = [], attempts = 3) {
+  let last;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await client.readContract({ address, functionName, args });
+    } catch (e) {
+      last = e;
+      if (i < attempts - 1) await new Promise((r) => setTimeout(r, 400 * (i + 1)));
+    }
+  }
+  throw last;
 }
 
 /**

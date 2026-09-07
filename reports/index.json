@@ -41,5 +41,21 @@
       "show_retest": false
     }
   ],
+  "probe_sets": [
+    {
+      "file": "ps_4a8062c5562c47a4.json",
+      "path": "probes/ps_4a8062c5562c47a4.json",
+      "probe_set_id": "ps_4a8062c5562c47a4",
+      "n_probes": 8,
+      "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562"
+    },
+    {
+      "file": "ps_6ce467da9d20c1f2.json",
+      "path": "probes/ps_6ce467da9d20c1f2.json",
+      "probe_set_id": "ps_6ce467da9d20c1f2",
+      "n_probes": 8,
+      "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2"
+    }
+  ],
   "retest": "reports/retest.json"
 }

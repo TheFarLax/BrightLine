@@ -48,8 +48,21 @@ def build_index() -> dict:
             # starts; showing it on every report would imply each one is a diff.
             "show_retest": data["rule"]["label"] == "v1",
         })
+    # Probe manifests, so the agreement tab can show exactly what will be tested.
+    probes = []
+    for path in sorted((ROOT / "probes").glob("ps_*.json")):
+        try:
+            data = json.loads(path.read_text())
+        except (ValueError, OSError):
+            continue
+        probes.append({"file": path.name, "path": f"probes/{path.name}",
+                       "probe_set_id": data.get("probe_set_id"),
+                       "n_probes": data.get("n_probes"),
+                       "rule_hash": (data.get("generated_from") or {}).get("rule_hash")})
+
     retest = "reports/retest.json" if (REPORTS / "retest.json").exists() else None
-    index = {"schema": "brightline.index/1", "reports": entries, "retest": retest}
+    index = {"schema": "brightline.index/1", "reports": entries,
+             "probe_sets": probes, "retest": retest}
     (REPORTS / "index.json").write_text(json.dumps(index, indent=2))
     return index
 
@@ -75,7 +88,8 @@ def main() -> int:
                    check=False)
 
     index = build_index()
-    print(f"indexed {len(index['reports'])} report(s)"
+    print(f"indexed {len(index['reports'])} report(s), "
+          f"{len(index['probe_sets'])} probe set(s)"
           f"{' + retest' if index['retest'] else ''}")
     for e in index["reports"]:
         print(f"  {e['label']}")
