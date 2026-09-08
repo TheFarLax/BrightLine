@@ -1,14 +1,22 @@
 <!-- Brightline mark.
 
      One line enters. It does not stay one line: at the point where the rule stops
-     saying what happens, it forks into three. That is the product's actual finding --
+     saying what happens, it forks into three. That is the product's actual finding —
      six frontier models, one sentence of contract, three different decisions
-     (ACCEPT / INSUFFICIENT / REJECT) -- drawn rather than described.
+     (ACCEPT / INSUFFICIENT / REJECT) — drawn rather than described.
 
      White is the agreement as written; the blues are what the network answered. The
      colour changes exactly at the branch point, because otherwise the middle branch is
      collinear with the input and the whole thing reads as one line with a chevron on
-     it. Geometry is deliberately coarse so the fork still resolves at 32px. -->
+     it. Geometry is deliberately coarse so the fork still resolves at 32px.
+
+     Em dashes above are literal U+2014, not the doubled hyphen used everywhere else in
+     this repository. XML forbids that sequence inside a comment, so the house style
+     silently makes this file un-decodable: an img element parses SVG with a strict XML
+     parser and shows a broken icon, while setContent() in scripts/render_logo.mjs
+     parses it as HTML and does not care. That is how a correct PNG came to be rendered
+     from a source no browser would display. build_static.py now parses every SVG it
+     ships, so the same mistake fails the build instead of the page. -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"
      role="img" aria-label="Brightline">
   <title>Brightline</title>

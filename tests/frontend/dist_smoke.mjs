@@ -31,7 +31,7 @@ const check = (name, ok, detail = "") => {
 
 const TYPES = {
   ".html": "text/html", ".js": "text/javascript", ".json": "application/json",
-  ".md": "text/plain", ".svg": "image/svg+xml",
+  ".md": "text/plain", ".svg": "image/svg+xml", ".png": "image/png",
 };
 
 /** Deliberately minimal: no rewriting, no fallbacks. A static host, and nothing more. */
@@ -99,6 +99,30 @@ async function main() {
     await page.waitForSelector("#panel-rule table", { timeout: 30000 }).catch(() => {});
     check("dist: probe manifests shipped",
       /ps_[0-9a-f]{8}/.test(await page.innerText("#panel-rule")));
+
+    // A 200 is not a rendered image. An SVG that is not well-formed XML is served
+    // happily, reports `complete: true`, and still draws a broken-image icon -- which is
+    // exactly how the header mark shipped broken once. So decode every image the page
+    // references, including the icons, which have no element to measure.
+    const images = await page.evaluate(async () => {
+      const urls = [
+        ...[...document.images].map((i) => i.currentSrc || i.src),
+        ...[...document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]')]
+          .map((l) => l.href),
+      ];
+      return Promise.all(urls.map(async (url) => {
+        const img = new Image();
+        img.src = url;
+        try {
+          await img.decode();
+          return { url, w: img.naturalWidth, h: img.naturalHeight, err: null };
+        } catch (e) { return { url, w: 0, h: 0, err: String(e) }; }
+      }));
+    });
+    const broken = images.filter((i) => i.err || i.w === 0);
+    check(`dist: all ${images.length} images and icons decode and render`,
+      images.length >= 3 && broken.length === 0,
+      broken.map((b) => `${b.url} -> ${b.err || "naturalWidth 0"}`).join(" ;; "));
 
     check("dist: no request 404s", missing.length === 0, missing.slice(0, 4).join(" ;; "));
   } finally {

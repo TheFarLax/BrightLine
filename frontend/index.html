@@ -8,8 +8,10 @@
   resolution rule, adjudicates each one on GenLayer, and reports the exact scenarios where
   independent validators do not reach the same decision.">
 <!-- Relative so they resolve identically under scripts/serve.py and in the built dist/.
-     og:image is relative too: the deployment URL is not known at build time, and the
-     platforms that require an absolute one degrade to no preview rather than a broken one. -->
+     Under a project path (github.io/<repo>/) a root-relative "/assets/..." would point
+     outside the deployment entirely, so these stay relative and scripts/build_static.py
+     rewrites only og:image to an absolute URL -- social crawlers are the one consumer
+     that will not resolve a relative one against the page. -->
 <link rel="icon" href="assets/logo.svg">
 <link rel="apple-touch-icon" href="assets/logo.png">
 <meta property="og:title" content="Brightline">

@@ -28,15 +28,24 @@ from __future__ import annotations
 import argparse
 import http.server
 import json
+import re
 import shutil
 import socketserver
 import subprocess
 import sys
+import xml.etree.ElementTree as ET
 from fnmatch import fnmatch
 from pathlib import Path
+from urllib.parse import urljoin
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
+
+# Where this bundle is published. Only `og:image` needs it: social crawlers do not
+# resolve a relative one against the page, so the page's own relative path -- correct
+# for every other consumer, and required under a project path like /BrightLine/ --
+# silently yields no preview card. Pass `--base-url ""` when building for another host.
+SITE_URL = "https://thefarlax.github.io/BrightLine/"
 
 REDIRECT = """<!DOCTYPE html>
 <html lang="en">
@@ -83,7 +92,43 @@ def copy_tree(src: Path, dst: Path, *, patterns: list[str] | None = None) -> lis
     return written
 
 
-def build(out: Path) -> Path:
+def absolutize_og_image(html: str, base: str, page_dir: str) -> str:
+    """Rewrite a relative `og:image` to an absolute URL. No-op if `base` is empty."""
+    if not base:
+        return html
+
+    def sub(m: re.Match[str]) -> str:
+        url = m.group(2)
+        if url.startswith(("http://", "https://", "//")):
+            return m.group(0)
+        return m.group(1) + urljoin(urljoin(base, page_dir), url) + m.group(3)
+
+    return re.sub(r'(<meta property="og:image" content=")([^"]+)(")', sub, html)
+
+
+def check_svgs(out: Path) -> int:
+    """Every shipped SVG must parse as XML, or the browser will not render it.
+
+    An `<img>` or `<link rel=icon>` decodes SVG with a strict XML parser.
+    `scripts/render_logo.mjs` does not: it inlines the same bytes into an HTML document,
+    whose parser forgives things XML forbids. That gap once shipped a logo which built a
+    perfect PNG and rendered as a broken-image icon on every page that referenced the
+    source. Parsing here means the same mistake fails the build instead of the site.
+    """
+    svgs = sorted(out.rglob("*.svg"))
+    bad = []
+    for svg in svgs:
+        try:
+            ET.parse(svg)
+        except ET.ParseError as exc:
+            bad.append(f"{svg.relative_to(out)}: {exc}")
+    if bad:
+        raise SystemExit("SVG assets are not well-formed XML, so a browser will show a "
+                         "broken image rather than the logo:\n  " + "\n  ".join(bad))
+    return len(svgs)
+
+
+def build(out: Path, base_url: str = SITE_URL) -> Path:
     # Regenerate both machine-written inputs first, so a stale index or a network
     # config from an older deployment can never be what gets published.
     #
@@ -115,6 +160,8 @@ def build(out: Path) -> Path:
         "probes": copy_tree(ROOT / "probes", out / "probes", patterns=["ps_*.json"]),
         "docs": copy_tree(ROOT / "docs", out / "docs", patterns=["*.md"]),
     }
+    page = out / "frontend" / "index.html"
+    page.write_text(absolutize_og_image(page.read_text(), base_url, "frontend/"))
     (out / "index.html").write_text(REDIRECT)
     # GitHub Pages runs Jekyll over the published tree unless this file exists, and Jekyll
     # would swallow dist/docs/*.md -- the footer links in the app point straight at them.
@@ -134,6 +181,9 @@ def build(out: Path) -> Path:
     required = [
         "frontend/index.html", "frontend/app.js", "frontend/networks.json",
         "frontend/vendor/genlayer-js.js", "reports/index.json",
+        # Referenced by <link rel=icon>, <link rel=apple-touch-icon>, og:image and the
+        # header mark. A missing one is a broken image in the first 40 pixels of the page.
+        "frontend/assets/logo.svg", "frontend/assets/logo.png",
     ]
     required += [e["path"] for e in index["reports"]]
     required += [p["path"] for p in index["probe_sets"]]
@@ -158,8 +208,13 @@ def build(out: Path) -> Path:
                          "addresses would reach the browser. Run "
                          "scripts/export_frontend_config.py against a real deployment.")
 
+    n_svg = check_svgs(out)
+
     print(f"\n  {len(required)} required asset(s) present, nothing private included")
+    print(f"  {n_svg} SVG asset(s) parse as XML")
     print(f"  usable network(s): {', '.join(usable)}")
+    if base_url:
+        print(f"  og:image absolutized against {base_url}")
     return out
 
 
@@ -168,9 +223,12 @@ def main() -> int:
     ap.add_argument("--out", default=str(ROOT / "dist"))
     ap.add_argument("--serve", type=int, metavar="PORT",
                     help="serve the built dist to check it before deploying")
+    ap.add_argument("--base-url", default=SITE_URL,
+                    help="public URL of the deployment; only og:image needs it. "
+                         'Pass "" to leave og:image relative.')
     args = ap.parse_args()
 
-    out = build(Path(args.out).resolve())
+    out = build(Path(args.out).resolve(), base_url=args.base_url)
     if args.serve:
         class Handler(http.server.SimpleHTTPRequestHandler):
             def __init__(self, *a, **kw):

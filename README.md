@@ -231,7 +231,7 @@ Details, host requirements and the excluded-files rationale in
 | | |
 |---|---|
 | `.venv/bin/python -m pytest tests/unit tests/direct -q` | 66 pass, 3 skip by design |
-| `npm run test:all` | 136 JS checks, incl. 68 in a real Chromium against live studionet and a 9-check smoke test of the deployable bundle |
+| `npm run test:all` | 137 JS checks, incl. 68 in a real Chromium against live studionet and a 10-check smoke test of the deployable bundle |
 | `npm run test:live` | 34 live studionet checks through the JS stack, real transactions |
 
 The browser suite covers read-only mode, the wallet RPC sequence against a mock
