@@ -160,6 +160,61 @@ async function main() {
     check("escrow: untested deal stays OPEN", deal.state === "OPEN", deal.state);
   }
 
+  // ------------------------------------------------ case 4: the public demo journey
+  //
+  // Cases 1 and 2 prove the two outcomes in isolation. This walks them as one continuous
+  // sequence, because that is what a visitor does and because it pins the property the
+  // UI has to respect: a refusal is *not* recoverable by editing the deal. `open_deal`
+  // freezes `max_counterexamples` and the contract exposes no setter, so the second
+  // attempt must be a second deal. If a future change added a setter, this test is where
+  // the anti-gaming property would be seen to die.
+  {
+    const tight = Math.max(0, worst - 1);
+    const tightId = `js-demo-tight-${stamp}`;
+    const okId = `js-demo-ok-${stamp}`;
+
+    await settle(client, String(await client.writeContract({
+      address: escrow, functionName: "open_deal",
+      args: [tightId, account.address, rule, tight], value: 0n })));
+    const refused = await settle(client, String(await client.writeContract({
+      address: escrow, functionName: "lock", args: [tightId], value: AMOUNT })));
+    check("demo: lock at tolerance below worst is refused", executionFailed(refused),
+      `status ${statusName(refused)}`);
+    check("demo: refusal is the message the walkthrough quotes",
+      new RegExp(`rule has ${worst} counterexamples, deal tolerates ${tight}`)
+        .test(revertMessage(refused)), revertMessage(refused));
+
+    // The gate is not editable in place: same deal, raised expectations, same answer.
+    const stillTight = JSON.parse(await client.readContract(
+      { address: escrow, functionName: "get_deal", args: [tightId] }));
+    check("demo: the refused deal keeps its original tolerance",
+      Number(stillTight.max_counterexamples) === tight && stillTight.state === "OPEN",
+      `${stillTight.max_counterexamples} / ${stillTight.state}`);
+
+    // Recovery is a new deal at the raised tolerance -- the flow the panel now guides.
+    await settle(client, String(await client.writeContract({
+      address: escrow, functionName: "open_deal",
+      args: [okId, account.address, rule, worst], value: 0n })));
+    const okTx = await settle(client, String(await client.writeContract({
+      address: escrow, functionName: "lock", args: [okId], value: AMOUNT })));
+    check("demo: a new deal at the raised tolerance locks", !executionFailed(okTx),
+      revertMessage(okTx));
+    const locked = JSON.parse(await client.readContract(
+      { address: escrow, functionName: "get_deal", args: [okId] }));
+    check("demo: state is LOCKED", locked.state === "LOCKED", locked.state);
+    check("demo: counterexamples_at_lock equals the worst published finding",
+      Number(locked.counterexamples_at_lock) === worst,
+      `${locked.counterexamples_at_lock} vs ${worst}`);
+    check("demo: the escrowed amount is the 0.01 GEN the button sends",
+      BigInt(locked.amount) === AMOUNT, `${locked.amount} vs ${AMOUNT}`);
+
+    // The earlier refusal is untouched by the later success: two independent deals.
+    const after = JSON.parse(await client.readContract(
+      { address: escrow, functionName: "get_deal", args: [tightId] }));
+    check("demo: the refused deal is still OPEN after the second one locked",
+      after.state === "OPEN", after.state);
+  }
+
   console.log(`\n${pass}/${pass + fail} live settlement checks passed`);
   if (fail) process.exit(1);
 }

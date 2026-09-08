@@ -8,13 +8,16 @@ Everything below runs on the deployed dApp against live studionet. Nothing is mo
 
 ## Before you start
 
+Live: <https://thefarlax.github.io/BrightLine/> — or serve the same bundle locally:
+
 ```bash
-.venv/bin/python scripts/build_static.py --serve 8899     # or open the deployed URL
+.venv/bin/python scripts/build_static.py --serve 8899
 ```
 
 - MetaMask installed, `npm:genlayer-wallet-plugin` Snap already approved, account
   funded on studionet. Approving the Snap for the first time costs 30 seconds you do
-  not have.
+  not have. If the account is empty, **Faucet** in the header tops it up — but do that
+  before the clock starts, not on camera.
 - The v1 report already published to the registry
   (`.venv/bin/python -m brightline.publish reports/v1_ps_6ce467da9d20c1f2_studionet.json`).
   Publishing is a write like any other; it is just not the interesting one.
@@ -106,10 +109,15 @@ Say the limitation before anyone asks:
    > "That is the contract's own message, on chain: *rule has 4 counterexamples, deal
    > tolerates 3.* And notice the deal is still **OPEN** — the gate declined the state
    > transition, not the call. Nothing is stuck."
-4. Raise tolerance to **4**. **Lock** again. It locks.
-   > "Same rule, same evidence, different informed decision. The payer accepted four
-   > known counterexamples, and the registry summary they relied on is frozen into the
-   > deal so a later report can't rewrite what they agreed to."
+4. Raise tolerance to **4**. The panel warns that the open deal is still fixed at 3.
+   Press **Open a new deal at tolerance 4**, then **Lock 0.01 GEN**. It locks.
+   > "Note what I could *not* do: raise the tolerance on the deal I already opened.
+   > `open_deal` freezes that number and the contract has no setter for it, so accepting
+   > four counterexamples means committing to four up front, in a new deal. A payer who
+   > could move the bar after seeing the findings wouldn't be committing to anything."
+   > "Same rule, same evidence, different informed decision. The registry summary they
+   > relied on is frozen into the deal, so a later report can't rewrite what they
+   > agreed to."
 5. If time allows, switch the rule selector to *(untested rule)* and lock once more:
    > "The other refusal: *no published Brightline report — run the probes and publish
    > before locking funds.*"

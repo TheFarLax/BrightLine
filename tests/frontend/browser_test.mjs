@@ -257,6 +257,24 @@ async function main() {
       check("settlement: lowering tolerance below the finding predicts refusal",
         /Expected refusal/.test(await page.innerText("#panel-settle")));
 
+      // The stepper stops tracking `worst` once the payer has moved it. Before this,
+      // any later registry read snapped the tolerance back and silently discarded the
+      // choice the user had just made.
+      await page.click("#s-refresh");
+      await page.waitForTimeout(1500);
+      check("settlement: a chain refresh does not overwrite the payer's tolerance",
+        /Expected refusal/.test(await page.innerText("#panel-settle")),
+        await page.$eval("#tol-val", (e) => e.innerText));
+
+      // The open button names the tolerance it would commit to, because that number is
+      // frozen by open_deal and cannot be edited afterwards.
+      check("settlement: the open-deal button states the tolerance it commits to",
+        /Open deal at tolerance \d+/.test(await page.$eval("#d-open", (b) => b.innerText)),
+        await page.$eval("#d-open", (b) => b.innerText));
+
+      check("settlement: no refusal is announced before a lock is attempted",
+        !/Refused/.test(await page.innerText("#panel-settle")));
+
       // The untested rule is the second refusal path.
       await page.selectOption("#s-rule", `0x${"ee".repeat(32)}`);
       await page.waitForFunction(

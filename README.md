@@ -231,8 +231,8 @@ Details, host requirements and the excluded-files rationale in
 | | |
 |---|---|
 | `.venv/bin/python -m pytest tests/unit tests/direct -q` | 66 pass, 3 skip by design |
-| `npm run test:all` | 119 JS checks, incl. 65 in a real Chromium against live studionet and a 9-check smoke test of the deployable bundle |
-| `npm run test:live` | 26 live studionet checks through the JS stack, real transactions |
+| `npm run test:all` | 136 JS checks, incl. 68 in a real Chromium against live studionet and a 9-check smoke test of the deployable bundle |
+| `npm run test:live` | 34 live studionet checks through the JS stack, real transactions |
 
 The browser suite covers read-only mode, the wallet RPC sequence against a mock
 EIP-1193 provider, both escrow refusal paths, rule hashing, the WAI-ARIA tab model, and
@@ -253,6 +253,12 @@ all, and that the **worst** published counterexample count is within a tolerance
 payer fixed before opening the deal. `worst_counterexamples` takes the maximum across
 competing reports, so publishing until a flattering run appears buys nothing — and a
 counterparty can publish their own adversary's findings against the same rule.
+
+The tolerance is fixed by `open_deal` and there is no setter. A refused lock leaves the
+deal `OPEN`, but recovering from it means opening a *new* deal at a higher tolerance,
+not editing the old one: a payer who could raise the bar after seeing the findings would
+not be committing to anything. The dApp guides that second deal rather than offering a
+retry that would only be refused again.
 
 ## Honesty notes
 
