@@ -19,6 +19,7 @@ disk — then copies:
 
 ```
 dist/index.html          redirect to frontend/
+dist/.nojekyll           stops GitHub Pages running Jekyll over docs/*.md
 dist/frontend/           the app, verbatim (incl. vendor/genlayer-js.js and assets/)
 dist/reports/*.json|md   the published reports and the re-test diff
 dist/probes/ps_*.json    frozen probe manifests
@@ -68,8 +69,14 @@ No SPA fallback or rewrite rule is needed — every URL is a real file.
 
 ```bash
 .venv/bin/python scripts/build_static.py
-npx gh-pages -d dist
+npx gh-pages -d dist --dotfiles
 ```
+
+`--dotfiles` matters: without it `.nojekyll` is left behind and Jekyll eats `dist/docs/*.md`,
+which is where the app's footer links point. The published site sits under a project path
+(`…github.io/<repo>/`), which is also why the redirect stub carries an explicit `<link
+rel="icon">` — the browser's default `/favicon.ico` probe resolves at the *origin* root,
+outside the deployment.
 
 Or drive it from Actions: set *Settings → Pages → Source* to **GitHub Actions** and use
 a workflow that runs `python scripts/build_static.py`, then `upload-pages-artifact` with

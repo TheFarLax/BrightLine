@@ -45,6 +45,9 @@ REDIRECT = """<!DOCTYPE html>
 <title>Brightline</title>
 <meta http-equiv="refresh" content="0; url=frontend/">
 <link rel="canonical" href="frontend/">
+<!-- Without this the browser falls back to /favicon.ico at the *origin* root, which on a
+     project-path host (github.io/<repo>/) is outside the deployment and 404s. -->
+<link rel="icon" href="frontend/assets/logo.svg">
 </head>
 <body>
 <p>Brightline — an agreement fuzzer, run by the network that will later judge the
@@ -113,6 +116,10 @@ def build(out: Path) -> Path:
         "docs": copy_tree(ROOT / "docs", out / "docs", patterns=["*.md"]),
     }
     (out / "index.html").write_text(REDIRECT)
+    # GitHub Pages runs Jekyll over the published tree unless this file exists, and Jekyll
+    # would swallow dist/docs/*.md -- the footer links in the app point straight at them.
+    # Harmless on every other host, so it is written unconditionally rather than by flag.
+    (out / ".nojekyll").write_text("")
 
     print(f"\ndist -> {out}")
     total = 0
