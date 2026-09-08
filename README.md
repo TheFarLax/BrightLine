@@ -121,7 +121,6 @@ frontend/components/            wallet.js · tx.js · ruleinput.js · quickcheck
 frontend/assets/                logo.svg (source) · logo.png (rendered by scripts/render_logo.mjs)
 scripts/build_static.py         assembles dist/ for a static host
 tests/                          unit · direct (gltest) · frontend (node + Chromium + live)
-.github/workflows/pages.yml     manual-trigger deploy to GitHub Pages
 docs/VERIFIED_VS_ASSUMED.md     every GenLayer claim and its status
 docs/LIMITATIONS.md             what this does not measure
 docs/RESULTS.md                 the numbers, with provenance
@@ -224,8 +223,7 @@ npm run test:dist                             # builds it, serves only it, drive
 The dApp is static: no server, no API key, nothing to keep running. `dist/` mirrors the
 repo layout so the deployed URLs match `serve.py`'s exactly and there is no rewrite
 step. Any static host works over HTTPS — MetaMask will not inject a provider otherwise.
-[`.github/workflows/pages.yml`](.github/workflows/pages.yml) publishes to GitHub Pages
-on a manual trigger. Details and the excluded-files rationale in
+Details, host requirements and the excluded-files rationale in
 [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ### Tests

@@ -64,10 +64,17 @@ Any static host works. Two requirements only:
 
 No SPA fallback or rewrite rule is needed — every URL is a real file.
 
-**GitHub Pages** — [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) does
-it. Set *Settings → Pages → Source* to **GitHub Actions**, then run the workflow from
-the Actions tab. It is `workflow_dispatch` only: publishing a public site is a decision,
-not a side effect of committing.
+**GitHub Pages** — build locally and publish the directory:
+
+```bash
+.venv/bin/python scripts/build_static.py
+npx gh-pages -d dist
+```
+
+Or drive it from Actions: set *Settings → Pages → Source* to **GitHub Actions** and use
+a workflow that runs `python scripts/build_static.py`, then `upload-pages-artifact` with
+`path: dist` and `deploy-pages`. Keep it `workflow_dispatch` — publishing a public site
+is a decision, not a side effect of committing.
 
 **Anything else** — Netlify, Cloudflare Pages, Vercel: publish directory `dist`, build
 command `python scripts/build_static.py`, or just upload `dist/` by hand.
