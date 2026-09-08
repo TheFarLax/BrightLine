@@ -36,15 +36,31 @@ Excluded: `.brightline/` (local dev keys), `reports/raw/` and `experiments/` (5.
 The build fails loudly if any of those appear in the output, or if any asset the index
 references is missing.
 
+Two asset rules the build enforces, both learned the hard way:
+
+- **Every shipped SVG is parsed as XML.** A browser decodes SVG strictly when it comes
+  through `<img>` or `<link rel=icon>`, but `scripts/render_logo.mjs` inlines the same
+  bytes into an HTML document, which forgives more. A doubled hyphen inside a comment —
+  the repository's own em-dash style — is legal HTML and illegal XML, so `logo.svg` once
+  built a perfect PNG and rendered as a broken-image icon everywhere it was referenced.
+  `check_svgs()` makes that a failed build rather than a shipped page.
+- **`og:image` is absolutized at build time.** Every path in the app is relative, which
+  is what makes a project path like `/BrightLine/` work at all — a root-relative
+  `/assets/logo.svg` would point outside the deployment. Social crawlers are the one
+  consumer that will not resolve a relative URL against the page, so the build rewrites
+  that single attribute against `--base-url` (default
+  `https://thefarlax.github.io/BrightLine/`; pass `""` for another host).
+
 ## Verify before publishing
 
 ```bash
 npm run test:dist        # builds dist/, serves only dist/, drives it in Chromium
 ```
 
-Nine checks: the root redirect lands on the app, a report renders from the bundled
+Ten checks: the root redirect lands on the app, a report renders from the bundled
 artifacts, the vendored SDK reads live studionet state, every tab mounts, probe
-manifests shipped, and **no request 404s**. That last one is the reason this test
+manifests shipped, every image and icon **decodes** (a 200 is not a rendered image), and
+**no request 404s**. That last one is the reason this test
 exists — `serve.py` serves the whole repository, so a file that was never copied into
 `dist/` is invisible locally and fatal in production.
 
