@@ -75,3 +75,37 @@ export function lockPreview({ tested, worst, tolerance }) {
   }
   return { allowed: true, reason: `${worst} counterexamples within tolerance ${tolerance}` };
 }
+
+/**
+ * What the settlement panel should offer next, given the chain's answer and the payer's
+ * stepper.
+ *
+ * Extracted and pure because the interesting sequence -- open at a tight tolerance, get
+ * refused, raise, lock -- cannot be driven end to end in an automated browser: signing
+ * needs a human to approve a MetaMask Snap. This way the decisions around the write are
+ * asserted even though the write itself is manual.
+ *
+ * The rule it encodes: once a deal exists, the contract judges it by the
+ * `max_counterexamples` frozen at `open_deal`. `GatedEscrow` deliberately has no setter
+ * for that field -- a payer who could raise the bar after seeing the findings would not
+ * be committing to anything -- so a raised stepper can only take effect through a *new*
+ * deal. Previewing the stepper against an already-open deal would tell the user the
+ * opposite and make the contract's refusal look like a malfunction.
+ */
+export function lockStep({ deal, tolerance, tested, worst, lastLock } = {}) {
+  const isOpen = deal?.state === "OPEN";
+  const dealTolerance = isOpen ? Number(deal.max_counterexamples) : null;
+  const effectiveTolerance = isOpen ? dealTolerance : Number(tolerance);
+  return {
+    dealTolerance,
+    effectiveTolerance,
+    // The stepper has moved away from what the open deal actually promises.
+    drifted: isOpen && dealTolerance !== Number(tolerance),
+    // A freshly opened deal is OPEN as well, so state alone cannot mean "refused";
+    // saying otherwise announces a rejection that never happened.
+    showRefusal: isOpen && lastLock === "refused",
+    // Locking a LOCKED, RELEASED or REFUNDED deal can only fail "deal is not open".
+    canLock: deal ? isOpen : true,
+    preview: lockPreview({ tested, worst, tolerance: effectiveTolerance }),
+  };
+}

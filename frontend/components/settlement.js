@@ -8,10 +8,16 @@
  *
  * Refusal is a designed state, not an error toast. The two refusal paths -- tolerance
  * below the worst finding, and no report at all -- are the clearest demonstration the
- * product has, and both leave the deal OPEN so the user can adjust and retry.
+ * product has, and both leave the deal OPEN rather than destroying it.
+ *
+ * "Still OPEN" is not "editable", and the panel must not blur the two. `open_deal`
+ * freezes `max_counterexamples` and `GatedEscrow` exposes no setter, so recovering from
+ * a refusal means opening a *new* deal at a higher tolerance. See `lockStep` in
+ * lib/attest.js, which decides that and is unit-tested -- the write it guards needs a
+ * human to approve a Snap, so the reasoning around it is where the coverage has to go.
  */
 
-import { lockPreview, publishArgs, reportToAttestation } from "../lib/attest.js";
+import { lockStep, publishArgs, reportToAttestation } from "../lib/attest.js";
 import { read, write } from "../lib/gl.js";
 import { createTxQueue } from "./tx.js";
 
@@ -34,6 +40,14 @@ const state = {
   deal: null,            // last deal read from chain
   dealId: null,
   tolerance: 0,
+  // The stepper follows the worst published finding until the user moves it. Without
+  // this the panel can mount before the wallet's read client exists, read 0, and then
+  // sit on a tolerance of 0 after the real answer (4) has arrived.
+  tolerancePinned: false,
+  // Whether the *last* lock attempt was refused. `state === "OPEN"` alone cannot say:
+  // a freshly opened deal is also OPEN, and reporting that as a refusal announces a
+  // rejection that never happened.
+  lastLock: null,        // null | "refused" | "ok"
   busy: false,
   loading: false,       // a registry read is in flight
   readKey: null,        // network+rule the current registry values belong to
@@ -82,6 +96,7 @@ async function refreshRegistry() {
     state.registry.worst = Number(worst);
     state.registry.summary = JSON.parse(summaryRaw || "{}");
     state.readKey = key;
+    if (!state.tolerancePinned) state.tolerance = state.registry.worst;
   } catch (e) {
     state.note = `registry read failed: ${e.message}`;
   } finally {
@@ -148,7 +163,12 @@ async function doPublish(reportEntry) {
 
 async function doOpenDeal() {
   const escrow = contracts().escrow;
-  state.dealId = `deal-${Date.now()}`;
+  // The address suffix matters on a public deployment: `deal_id` is unique per contract,
+  // and two visitors clicking in the same millisecond would otherwise collide and the
+  // second would be refused for a reason that has nothing to do with the gate.
+  state.dealId = `deal-${Date.now()}-${(state.wallet.address || "").slice(-6)}`;
+  state.deal = null;
+  state.lastLock = null;
   const payee = state.wallet.address;
   state.busy = true; paint();
   const res = await txq.track({
@@ -173,8 +193,10 @@ async function doLock() {
                         { value: DEFAULT_AMOUNT_WEI }),
   });
   state.busy = false;
-  // A refusal is the gate working. Keep it as a first-class result, and note that the
-  // deal is still OPEN so the user can raise the tolerance and try again.
+  // A refusal is the gate working. Keep it as a first-class result: the deal stays OPEN,
+  // and the way forward is a *new* deal at a higher tolerance, because `open_deal` fixes
+  // `max_counterexamples` and the contract offers no way to edit it afterwards.
+  state.lastLock = res.outcome === "refused" ? "refused" : res.ok ? "ok" : null;
   if (res.outcome === "refused") state.note = "";
   await refreshDeal();
   paint();
@@ -267,13 +289,12 @@ function publishCard() {
 }
 
 function dealCard() {
-  const preview = lockPreview({
-    tested: state.registry.tested, worst: state.registry.worst,
-    tolerance: state.tolerance,
-  });
   const d = state.deal;
   const locked = d?.state === "LOCKED";
-  const openAfterRefusal = d?.state === "OPEN";
+  const { dealTolerance: dealTol, drifted, showRefusal, canLock, preview } = lockStep({
+    deal: d, tolerance: state.tolerance, lastLock: state.lastLock,
+    tested: state.registry.tested, worst: state.registry.worst,
+  });
 
   const stateBlock = !d ? "" : locked
     ? `<div class="card ok-card">
@@ -293,13 +314,17 @@ function dealCard() {
         External messages are finalization-only and non-functional in Studio, so a
         payout that cannot run here would be theatre.</p>
       </div>`
-    : openAfterRefusal
+    : showRefusal
       ? `<div class="card refused-card">
           <h3>Refused — deal still OPEN</h3>
-          <p class="note">The gate declined the state transition, not just the call.
-          Raise the tolerance or publish a better report, then lock again.</p>
-          <p class="note">tolerance <b>${d.max_counterexamples}</b> ·
+          <p class="note">The gate declined the state transition, not just the call.</p>
+          <p class="note">this deal tolerates <b>${d.max_counterexamples}</b> ·
              worst published <b>${state.registry.worst}</b></p>
+          <p class="note">A deal's tolerance is fixed by <code>open_deal</code> and the
+          contract has no setter for it — that is the point, since a payer who could
+          raise the bar after seeing the findings would not be committing to anything.
+          To accept ${state.registry.worst}, raise the stepper and open a
+          <b>new</b> deal, then lock that one.</p>
         </div>`
       : "";
 
@@ -314,15 +339,19 @@ function dealCard() {
       <button type="button" data-tol="1">+</button>
       <span class="note">counterexamples the payer will accept</span>
     </div>
+    ${drifted ? `<p class="note warn">The open deal was fixed at tolerance
+      <b>${dealTol}</b>; the stepper now says <b>${state.tolerance}</b>. Locking judges
+      the deal, not the stepper — open a new deal to use ${state.tolerance}.</p>` : ""}
     <p class="${preview.allowed ? "note" : "note warn"}">
       ${preview.allowed ? "Expected to lock" : "Expected refusal"}: ${esc(preview.reason)}.
       <span class="note">The contract remains the authority — this is a preview.</span>
     </p>
     <div class="row">
       <button type="button" id="d-open" ${canWrite() && !state.busy ? "" : "disabled"}>
-        1 · Open deal</button>
+        ${d ? `Open a new deal at tolerance ${state.tolerance}`
+            : `1 · Open deal at tolerance ${state.tolerance}`}</button>
       <button type="button" id="d-lock"
-        ${canWrite() && !state.busy && state.dealId ? "" : "disabled"}>
+        ${canWrite() && !state.busy && state.dealId && canLock ? "" : "disabled"}>
         2 · Lock 0.01 GEN</button>
       <span class="note mono">${esc(state.dealId || "no deal yet")}</span>
     </div>
@@ -368,6 +397,8 @@ function bind() {
     state.ruleLabel = match?.rule_label || "untested";
     state.deal = null;
     state.dealId = null;
+    state.lastLock = null;
+    state.tolerancePinned = false;
     state.note = "";
     // Drop the previous rule's answers rather than showing them under the new rule's
     // name for the second or two the read takes.
@@ -376,9 +407,9 @@ function bind() {
     state.registry.summary = null;
     state.loading = true;
     paint();
+    // refreshRegistry defaults the stepper to the worst finding -- the smallest
+    // tolerance that locks -- now that the pin has been cleared.
     await refreshRegistry();
-    // Default the stepper to the worst finding: the smallest tolerance that locks.
-    state.tolerance = state.registry.worst;
     paint();
   });
 
@@ -393,6 +424,7 @@ function bind() {
     btn.addEventListener("click", () => {
       const delta = Number(btn.dataset.tol);
       state.tolerance = Math.max(0, state.tolerance + delta);
+      state.tolerancePinned = true;   // stop tracking `worst` once the payer has chosen
       paint();
     });
   }
@@ -431,7 +463,6 @@ export async function mountSettlement(el, { wallet, reports }) {
   state.loading = true;
   paint();
   await refreshRegistry();
-  state.tolerance = state.registry.worst;
   paint();
 }
 
