@@ -64,14 +64,26 @@ Any static host works. Two requirements only:
 
 No SPA fallback or rewrite rule is needed — every URL is a real file.
 
+**GitHub Pages** — build locally and publish the directory:
+
 ```bash
-# GitHub Pages, from a clean checkout
 .venv/bin/python scripts/build_static.py
 npx gh-pages -d dist
-
-# Netlify / Cloudflare Pages / Vercel: publish directory = dist, build command =
-# .venv/bin/python scripts/build_static.py  (or upload dist/ directly)
 ```
+
+Or drive it from Actions: set *Settings → Pages → Source* to **GitHub Actions** and use
+a workflow that runs `python scripts/build_static.py`, then `upload-pages-artifact` with
+`path: dist` and `deploy-pages`. Keep it `workflow_dispatch` — publishing a public site
+is a decision, not a side effect of committing.
+
+**Anything else** — Netlify, Cloudflare Pages, Vercel: publish directory `dist`, build
+command `python scripts/build_static.py`, or just upload `dist/` by hand.
+
+The build needs no dependencies on a clean checkout. `.brightline/` (the deployment
+record) is gitignored, so on a machine without it the script keeps the committed
+`frontend/networks.json` rather than regenerating it into nulls — and then refuses to
+finish if that file names no usable network. On a machine that *does* have the record,
+the config is regenerated from it, so a redeployment can never publish stale addresses.
 
 `dist/` is gitignored. It is a copy of files already in the repository and rebuilds in
 about a second; committing it would create a second copy of every report that can go
