@@ -7,8 +7,10 @@
     "test:receipt": "node tests/frontend/receipt_test.mjs",
     "test:render": "node tests/frontend/render_check.mjs",
     "test:browser": "node tests/frontend/browser_test.mjs",
+    "test:dist": "node tests/frontend/dist_smoke.mjs",
+    "build": ".venv/bin/python scripts/build_static.py",
     "test:settlement": "node tests/frontend/settlement_live.mjs",
-    "test:all": "node tests/frontend/receipt_test.mjs && node tests/frontend/hash_parity.mjs && node tests/frontend/render_check.mjs && node tests/frontend/browser_test.mjs",
+    "test:all": "node tests/frontend/receipt_test.mjs && node tests/frontend/hash_parity.mjs && node tests/frontend/render_check.mjs && node tests/frontend/browser_test.mjs && node tests/frontend/dist_smoke.mjs",
     "test:hash": "node tests/frontend/hash_parity.mjs",
     "test:quickcheck": "node tests/frontend/quickcheck_live.mjs",
     "test:live": "node tests/frontend/settlement_live.mjs && node tests/frontend/quickcheck_live.mjs"

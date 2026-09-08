@@ -11,6 +11,10 @@ __pycache__/
 *.pyc
 artifacts/
 frontend/vendor/.entry.mjs
+# Deployable bundle: a copy of files already in the repo, rebuilt by
+# `python scripts/build_static.py` in one second. Committing it would create a second
+# copy of every report that can silently go stale.
+dist/
 
 # NOT ignored, deliberately:
 #   frontend/vendor/genlayer-js.js  -- vendored SDK, committed so the dApp has no

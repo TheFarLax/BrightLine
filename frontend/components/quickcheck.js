@@ -237,12 +237,12 @@ function resultsCard() {
              "1 − modal share across runs")}
       ${tile("excluded", inconc, "inconclusive or no-consensus")}
     </div>
-    <table style="margin-top:14px"><thead><tr>
+    <div class="table-scroll" style="margin-top:14px"><table><thead><tr>
       <th>decision</th><th>share</th><th>n</th></tr></thead>
-      <tbody>${bars}</tbody></table>
-    <table style="margin-top:14px"><thead><tr>
+      <tbody>${bars}</tbody></table></div>
+    <div class="table-scroll" style="margin-top:14px"><table><thead><tr>
       <th>run</th><th>outcome</th><th>conf</th><th>model used</th><th>tx</th><th>note</th>
-    </tr></thead><tbody>${rows}</tbody></table>
+    </tr></thead><tbody>${rows}</tbody></table></div>
     <p class="note warn">This measures run-to-run stability of the live committee. It is
     <b>not</b> a Split Score and not a cross-model panel: the browser cannot pin a model
     (genlayer-js ignores <span class="mono">simConfig</span>), so model choice is the
@@ -300,8 +300,13 @@ function paint() {
     <div id="q-txq"></div>`}
     ${state.note ? `<p class="note warn">${esc(state.note)}</p>` : ""}`;
 
+  // Survives a repaint: the run loop repaints after every observation, and a queue
+  // rebuilt each time would drop the earlier runs' hashes mid-demo.
   const txHost = host.querySelector("#q-txq");
-  if (txHost) txq = createTxQueue(txHost, { net: net() });
+  if (txHost) {
+    if (txq) txq.attach(txHost, { net: net() });
+    else txq = createTxQueue(txHost, { net: net() });
+  }
   bind();
 }
 
@@ -328,6 +333,8 @@ function bind() {
 }
 
 export async function mountQuickCheck(el, { wallet, probeSet, ruleHash, ruleLabel }) {
+  if (txq) txq.dispose();
+  txq = null;
   host = el;
   state.wallet = wallet;
   state.probeSet = probeSet;

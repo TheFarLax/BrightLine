@@ -114,17 +114,18 @@ mechanical floor of this instrument is empirically zero.
 | C2 | pathological detected | div ≥ 0.30 **or** unanimous `INSUFFICIENT` on ≥ half its probes | 5 / 5 detected | **PASS** |
 | C3 | matched pairs separate | ≥ 5 of 6 directional **and** Wilcoxon p < 0.05 | 3 of 6, W = 12.0, p = 0.844 | **FAIL** |
 | C4 | discriminability | AUC ≥ 0.75, bootstrap CI excludes 0.5 | AUC 0.787, CI [0.585, 0.938] | **PASS** |
-| C5 | attribution | residual > max(A1, A2, A3) | not evaluated in the main run | pending |
-| C6 | transfer to Bradbury | Spearman ρ ≥ 0.6 | not evaluated in the main run | pending |
+| C5 | attribution | residual > max(A1, A2, A3) | not evaluated in the main run — [ran separately](#c5-and-c6--the-remaining-arms) | not evaluable as written |
+| C6 | transfer to Bradbury | Spearman ρ ≥ 0.6 | not evaluated in the main run — [ran separately](#c5-and-c6--the-remaining-arms) | **FAIL** |
 
 **The study does not pass.** The pre-registration requires all six criteria to hold.
 
-**And no failure branch is invocable yet.** The branch for a C3 failure is written as
-*"3 fails while 1, 2, 4, 5 pass"* — it is conditioned on C5, and C5 was never
-evaluated, so it neither passed nor failed. Branch selection literally depends on a
-criterion that does not yet have a value. Running C5 and C6 before invoking anything
-is the only reading of the pre-registration that is faithful to it. Those arms are
-running now; the branch will be applied to the completed set, not to a partial one.
+**And no failure branch was invocable from the main run alone.** The branch for a C3
+failure is written as *"3 fails while 1, 2, 4, 5 pass"* — it is conditioned on C5, and
+C5 was not evaluated in the main run, so it neither passed nor failed. Branch selection
+literally depends on a criterion that did not yet have a value. Running C5 and C6
+before invoking anything was the only reading of the pre-registration faithful to it.
+Those arms have since run; both are below, and the branches are applied to the
+completed set in [the verdict](#verdict-with-the-pre-registered-branches-applied-as-written).
 
 ## C3 in detail — and the confound I should have controlled
 

@@ -82,7 +82,9 @@ function render(host) {
       ${writeNote}
       ${unusable.length ? `<span class="note">no deployment: ${esc(unusable.join(", "))}</span>` : ""}
     </div>
-    ${state.error ? `<div class="bar err-line">${esc(state.error)}</div>` : ""}`;
+    ${state.error ? `<div class="bar err-line">${esc(state.error)}
+       <button type="button" id="w-retry" class="txcopy">Retry</button></div>` : ""}`;
+  host.removeAttribute("aria-busy");
 
   host.querySelector("#w-net").addEventListener("change", async (e) => {
     await selectNetwork(host, e.target.value);
@@ -91,6 +93,14 @@ function render(host) {
   if (btn) btn.addEventListener("click", () => connect(host));
   const fund = host.querySelector("#w-fund");
   if (fund) fund.addEventListener("click", () => fundAccount(host));
+  // The hosted RPC rate-limits, so a failed header read is usually transient. Offering
+  // the retry beats making the user reload and lose their wallet connection.
+  const retry = host.querySelector("#w-retry");
+  if (retry) retry.addEventListener("click", async () => {
+    state.error = null;
+    render(host);
+    await refreshReads(host);
+  });
 }
 
 async function refreshReads(host) {

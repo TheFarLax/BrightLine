@@ -62,11 +62,11 @@ export function probeTable(r) {
       <td class="mono">${esc(dist)}</td>
     </tr>`;
   }).join("");
-  return `<table>
+  return `<div class="table-scroll"><table>
     <thead><tr><th>probe</th><th>family</th>
       <th>divergence (bar), τ marked</th><th>value</th><th>state</th>
       <th>decisions</th></tr></thead>
-    <tbody>${rows}</tbody></table>`;
+    <tbody>${rows}</tbody></table></div>`;
 }
 
 export function findings(r) {
@@ -118,9 +118,9 @@ export function retest(d) {
   return `<h2>Re-test loop</h2>
     <p>The fresh arm is not optional: without it a rule can be tuned to pass a corpus
     it has already seen.</p>
-    <table><thead><tr><th>arm</th><th>rule</th><th>probe set</th>
-      <th>counterexamples (bar)</th><th>K / N</th><th>mean div</th></tr></thead>
-      <tbody>${rows}</tbody></table>
+    <div class="table-scroll"><table><thead><tr><th>arm</th><th>rule</th>
+      <th>probe set</th><th>counterexamples (bar)</th><th>K / N</th><th>mean div</th>
+      </tr></thead><tbody>${rows}</tbody></table></div>
     ${d.verdict ? `<p style="margin-top:12px"><b>Verdict.</b> ${esc(d.verdict)}</p>` : ""}`;
 }
 
@@ -138,24 +138,6 @@ export function provenance(r) {
       <div>${"report_hash".padEnd(24)}${esc(r.report_hash)}</div>
       <div>${"panel_models".padEnd(24)}${esc((p.panel_models || []).join(", "))}</div>
     </div>`;
-}
-
-function render(r, diff) {
-  $("#app").innerHTML = `
-    <h2>Rule under test</h2>
-    <div class="card"><span class="mono">${esc(r.rule.label)} ·
-      ${esc(r.rule.rule_hash.slice(0, 18))}</span>
-      <div class="scen">${esc(r.rule.normalized)}</div></div>
-    <h2>Findings</h2>
-    ${metricTiles(r)}
-    <h2>Per probe</h2>
-    ${probeTable(r)}
-    <h2>Counterexamples</h2>
-    <p>The output that matters. Each card is a scenario where independent models did
-    not reach the same decision, with the reason each camp gave.</p>
-    ${findings(r)}
-    ${retest(diff)}
-    ${provenance(r)}`;
 }
 
 /** Full report body as HTML. Returns a string so callers own where it lands. */

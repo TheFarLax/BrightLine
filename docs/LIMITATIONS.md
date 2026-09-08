@@ -58,18 +58,31 @@ different numbers. The panel list is in every report.
 - **CONSENSUS** (a real round) is what settlement uses, but a validator's own answer
   is never published — only its vote. A split therefore tells you the jury divided
   and not into what, and stores no state at all.
-- **LIVE** on Bradbury is the only network-truth arm, and it is currently
-  **unmeasured**: the faucet requires GitHub OAuth plus a Cloudflare Turnstile
-  challenge, so funding is a human step. Every claim in this repo is therefore a
-  studionet claim until `scripts/e3_e4_bradbury.py` runs green.
+- **LIVE** on Bradbury is the only network-truth arm. It has since run
+  (`scripts/e3_e4_bradbury.py`, E3/E4 both PASS): a real transaction reached
+  `Accepted` / `FinishedWithReturn`, and validator vote bytes were decoded off a live
+  receipt. But it yields **votes, not decisions** — `sim_config` is Studio-only, so the
+  panel channel cannot run there at all. Every *measurement* in this repo is therefore
+  still a studionet measurement; what Bradbury establishes is that the contract path
+  and the receipt reading are real on a public network, not that the numbers transfer.
+  In the E6 transfer arm the live committee was unanimous on all five measurable
+  domains, so transfer is **unevaluated rather than demonstrated**.
 
-## Known unresolved assumption
+## An assumption that was resolved, and how
 
-`roundData[].validatorVotes` is base64 whose layout is not documented. We infer one
+`roundData[].validatorVotes` is base64 whose layout is not documented. We inferred one
 byte per validator, positionally aligned to `roundValidators`, using the documented
-vote enum where `4 == NondetDisagree`. **Nothing in the analyzer depends on this
-yet.** E4 tests it; the fallback (transaction-level `NondetDisagree` as a 1-bit
-signal plus distinct-`validatorResultHash` cardinality) is implemented.
+vote enum. E4 confirmed it against real revealed votes on Bradbury — five bytes for
+five validators, every byte in the enum, and two independent vectors including a
+non-uniform one (`[1,1,1,1,3]`, one Timeout), so the decode resolves real vectors and
+not just zero padding. The fallback (transaction-level `NondetDisagree` as a 1-bit
+signal plus distinct-`validatorResultHash` cardinality) stays implemented but is no
+longer load-bearing.
+
+A second Bradbury reading was wrong and is worth recording: `roundData[0]` is *not*
+the round to read. Bradbury appends several entries all labelled `round: 0`, and the
+pre-reveal entry has all-zero vote bytes — it would read as "nobody disagreed". The
+analyzer takes the last entry with `votesRevealed > 0`.
 
 ## Not built on purpose
 
@@ -80,10 +93,49 @@ appeals UI, no on-chain scoring. The score is computed off-chain from public
 receipts precisely so anyone can recompute it from the transaction hashes in the
 report.
 
-## The falsification condition still stands
+## The falsification condition was tested, and it bit
 
-If a calibration study cannot show that cross-model divergence separates loose rules
-from tightened controls better than chance, the score gets dropped and the
-counterexample generator ships alone. The current evidence is encouraging — noise
-floor 0.0 against mean divergence 0.3125 on the v1 run — but one rule and eight
-probes is not a study.
+The pre-registered condition: if a calibration study cannot show that cross-model
+divergence separates loose rules from tightened controls better than chance, the score
+gets dropped and the counterexample generator ships alone.
+
+E6 ran, and **the study does not pass** (`experiments/E6_calibration/final.json`, full
+write-up in [RESULTS.md](RESULTS.md)). C3 — the matched-pair criterion, the one that
+would license "this draft is clearer than that draft" — failed at 3 of 6 pairs
+directional, Wilcoxon p = 0.844. The pre-registration permits one disclosed corpus
+revision before a re-run; it had already been spent, so the pair corpus does **not**
+get rewritten and retried, even though the length confound is an obvious candidate fix
+and a re-run would probably look better.
+
+So the branch fired as written:
+
+- **Split Score is not validated for ranking two drafts of the same clause.**
+  Brightline must not be presented as a tool that tells you which rewrite is better.
+- It **is** supported as a discriminator between forced-answer rules and
+  judgment-requiring rules: controls 0.0333 against loose 0.2167 and pathological
+  0.2333, AUC 0.787 with a bootstrap CI excluding chance.
+- The mechanical floor is empirically zero: repetition 0.0, paraphrase 0.0, 323
+  self-consistency observations without one failure.
+- The score is labelled a **studionet lab instrument** wherever it appears, and it is
+  never a gating input. `GatedEscrow.lock()` reads report existence and the worst
+  published counterexample count, and nothing else.
+- The counterexample generator was unaffected by every branch above and ships
+  regardless. It never depended on the score being calibrated.
+
+## What the dApp cannot do
+
+- **It cannot run the panel.** genlayer-js 1.1.8 has no `simConfig` on `writeContract`
+  and passing one is silently ignored — verified by requesting three specific models
+  and getting three others. The browser cannot pin a validator model, so cross-model
+  divergence is CLI-only. The Quick check tab measures run-to-run stability of the live
+  committee and says so on screen.
+- **Settlement records entitlement; it does not move value.** External messages are
+  finalization-only and non-functional in Studio, so a payout that cannot execute here
+  would be theatre.
+- **Wallet writes are studionet-only.** genlayer-py needed an explicit gas limit to
+  land a write on Bradbury and genlayer-js is unverified there, so `wallet_writes` is
+  false for it and the header states the reason instead of failing at signing time.
+- **Studionet rate-limits browser reads under load**, returning a response with no
+  CORS header. Reads retry with backoff and an unreadable publication check renders as
+  unknown rather than as "not published" — claiming the latter would invite a duplicate
+  publish the contract would refuse.

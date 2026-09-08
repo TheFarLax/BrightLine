@@ -38,10 +38,30 @@ const [r, sc] = await Promise.all([
 ]);
 check("rule and probe are registered on chain", Boolean(r) && Boolean(sc));
 
+/* Studionet occasionally answers a JSON-RPC call with an HTML gateway page, which the
+ * SDK surfaces as an UnknownRpcError. The polling loop already tolerated that; the
+ * submit did not, so one dropped `eth_getTransactionCount` aborted the whole process
+ * before any assertion ran. Retry, then record the run as a transport failure -- it
+ * contributes no observation, exactly like a run that came back inconclusive. */
+async function submit() {
+  let last;
+  for (let a = 0; a < 3; a++) {
+    try {
+      return String(await client.writeContract({ address: probeAddr,
+        functionName: "adjudicate", args: [rule, probe.probe_id], value: 0n }));
+    } catch (e) {
+      last = e;
+      await new Promise((x) => setTimeout(x, 4000 * (a + 1)));
+    }
+  }
+  console.log(`        submit failed after 3 attempts: ${last?.shortMessage || last?.message}`);
+  return null;
+}
+
 const obs = [];
 for (let n = 1; n <= 3; n++) {
-  const h = String(await client.writeContract({ address: probeAddr,
-    functionName: "adjudicate", args: [rule, probe.probe_id], value: 0n }));
+  const h = await submit();
+  if (!h) { obs.push({ n, kind: "RPC_ERROR", decision: "", model: "" }); continue; }
   let t=null;
   for (let i=0;i<120;i++){ try{t=await client.getTransaction({hash:h});}catch{t=null;}
     if(t&&statusKind(statusName(t)).terminal)break; await new Promise(x=>setTimeout(x,3000)); }

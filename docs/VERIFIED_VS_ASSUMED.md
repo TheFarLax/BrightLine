@@ -69,7 +69,7 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 | **E5** frozen probe reuse across rule versions | **PASS** — V2 measured against V1's probe ids |
 | **E6** calibration study | **DOES NOT PASS** — C1/C2/C4 pass, C3 fails, C5 not evaluable as written (A1 unmeasurable), C6 fails. Branches applied in `experiments/E6_calibration/final.json` |
 | **E8** registry → report → escrow | **PASS** on studionet — report published and read back, gate allows a compliant deal and refuses both a below-tolerance deal and an untested rule, deal stays `OPEN` on refusal |
-| **E7** rewrite reduces counterexamples | in progress (V2 frozen + fresh arms) |
+| **E7** rewrite reduces counterexamples | **MIXED, and reported as such** — `reports/retest.json`. Frozen arm: K unchanged at 4/8, mean divergence 0.3125 → 0.225, 2 counterexamples closed and 2 newly opened, inconclusive 0.0 → 0.0833. Fresh arm (`ps_4a8062c5562c47a4`, written against v2): 2/8, mean 0.0625. The rewrite generalized; it did not eliminate the frozen counterexamples, and the honest headline is "fewer, not gone" |
 
 ## genlayer-py 0.16.3 vs. Bradbury (found while running E3)
 
@@ -103,7 +103,7 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 | Claim | Status | Evidence |
 |---|---|---|
 | genlayer-js supports an account-free read client and a provider-backed write client | `[V]` `[E]` | docs *genlayer-js*; `ClientConfig { account?, provider? }` in 1.1.8; live `ruling_count` read in a real Chromium with no wallet present |
-| Wallet signing requires MetaMask **plus the `npm:genlayer-wallet-plugin` Snap** | `[V]` `[E]` partial | `client.connect()` emits `eth_requestAccounts` → `eth_chainId` → `wallet_getSnaps` → `wallet_requestSnaps`, recorded against a mock EIP-1193 provider. **The real Snap install/approval is NOT verified** — no browser extension or display on this host |
+| Wallet signing requires MetaMask **plus the `npm:genlayer-wallet-plugin` Snap** | `[V]` `[E]` | `client.connect()` emits `eth_requestAccounts` → `eth_chainId` → `wallet_getSnaps` → `wallet_requestSnaps`, recorded automatically against a mock EIP-1193 provider (`tests/frontend/browser_test.mjs` case B prints the sequence). The real MetaMask + Snap install/approval/signing flow was walked **manually by the maintainer** on studionet and works; it cannot be automated here (no browser extension or display on this host), so the automated evidence stops at the RPC sequence |
 | `wallet_addEthereumChain` / `wallet_switchEthereumChain` are issued by `connect()` | `[V]` in the bundle, `[A]` in practice | Both strings are present in genlayer-js 1.1.8, but neither fired in testing because the mock returned a matching `eth_chainId`. The switch path is unexercised |
 | genlayer-js `readContract` works against studionet | `[E]` | `is_tested`, `worst_counterexamples`, `summary_for_rule`, `get_deal`, `ruling_count` all read correctly |
 | genlayer-js `writeContract` works against studionet, including payable value | `[E]` | 22/22 live settlement checks: publish, open_deal, lock (0.01 GEN), release |

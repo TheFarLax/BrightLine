@@ -130,9 +130,9 @@ function probeSetCard() {
         ? "— the rule above (this is the authored/frozen pairing)"
         : "— a <b>different</b> rule than the one above. Re-running a frozen set against a rewritten rule is the regression arm; it is deliberate, not a mismatch."}
     </p>
-    <table style="margin-top:12px"><thead><tr>
+    <div class="table-scroll" style="margin-top:12px"><table><thead><tr>
       <th>family</th><th>probes</th><th>quota</th><th></th></tr></thead>
-      <tbody>${families}</tbody></table>
+      <tbody>${families}</tbody></table></div>
     <h3 style="margin-top:18px">Scenarios (${(set.probes || []).length})</h3>
     <p class="note">Hermetic by construction: self-contained facts, no URLs, no live
     evidence. That is what makes divergence attributable to the rule.</p>

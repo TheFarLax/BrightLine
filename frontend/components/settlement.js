@@ -35,8 +35,15 @@ const state = {
   dealId: null,
   tolerance: 0,
   busy: false,
+  loading: false,       // a registry read is in flight
+  readKey: null,        // network+rule the current registry values belong to
   note: "",
 };
+
+/** What the values on screen are a reading *of*. Anything else is stale. */
+function readKey() {
+  return `${state.wallet?.net?.label ?? "-"}:${state.ruleHash}`;
+}
 
 let host = null;
 let txq = null;
@@ -63,6 +70,8 @@ async function refreshRegistry() {
   const reg = contracts().registry;
   if (!reg || !state.wallet?.reader || !state.ruleHash) return;
   const client = state.wallet.reader;
+  const key = readKey();
+  state.loading = true;
   try {
     const [tested, worst, summaryRaw] = await Promise.all([
       read(client, reg.address, "is_tested", [state.ruleHash]),
@@ -72,8 +81,11 @@ async function refreshRegistry() {
     state.registry.tested = Boolean(tested);
     state.registry.worst = Number(worst);
     state.registry.summary = JSON.parse(summaryRaw || "{}");
+    state.readKey = key;
   } catch (e) {
     state.note = `registry read failed: ${e.message}`;
+  } finally {
+    state.loading = false;
   }
 
   // Which committed reports are already on chain, so the publish list is honest. This
@@ -209,16 +221,18 @@ function registryCard() {
   return `<div class="card">
     <h3>Registry</h3>
     <div class="tiles">
-      ${tile("tested", state.registry.tested ? "yes" : "no",
+      ${tile("tested", state.loading ? "…" : state.registry.tested ? "yes" : "no",
              "has any report been published for this rule")}
-      ${tile("worst counterexamples", state.registry.worst,
+      ${tile("worst counterexamples", state.loading ? "…" : state.registry.worst,
              "maximum across competing reports")}
-      ${tile("reports on chain", s?.reports ?? 0, "anyone may add one")}
+      ${tile("reports on chain", state.loading ? "…" : s?.reports ?? 0,
+             "anyone may add one")}
     </div>
-    ${rows ? `<table style="margin-top:12px"><thead><tr>
+    ${rows ? `<div class="table-scroll" style="margin-top:12px"><table><thead><tr>
         <th>probe set</th><th>K / N</th><th>adversary</th><th>network</th><th>report</th>
-      </tr></thead><tbody>${rows}</tbody></table>` : `<p class="note"
-        style="margin-top:10px">No reports published for this rule yet.</p>`}
+      </tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="empty"
+        style="margin-top:10px">No reports published for this rule yet — the escrow
+        will refuse to lock against it.</div>`}
     <p class="note">Worst-of, not latest-of: a rule is as bad as its most successful
     attacker made it look, so publishing until a flattering run appears buys nothing.</p>
   </div>`;
@@ -337,7 +351,11 @@ function paint() {
     <div id="txq"></div>
     ${state.note ? `<p class="note warn">${esc(state.note)}</p>` : ""}`;
 
-  txq = createTxQueue(host.querySelector("#txq"), { net: state.wallet?.net });
+  // The queue outlives a repaint: rebuilding it here would erase the transaction
+  // history every time a deal changed state.
+  const txHost = host.querySelector("#txq");
+  if (txq) txq.attach(txHost, { net: state.wallet?.net });
+  else txq = createTxQueue(txHost, { net: state.wallet?.net });
   bind();
 }
 
@@ -351,6 +369,12 @@ function bind() {
     state.deal = null;
     state.dealId = null;
     state.note = "";
+    // Drop the previous rule's answers rather than showing them under the new rule's
+    // name for the second or two the read takes.
+    state.registry.tested = false;
+    state.registry.worst = 0;
+    state.registry.summary = null;
+    state.loading = true;
     paint();
     await refreshRegistry();
     // Default the stepper to the worst finding: the smallest tolerance that locks.
@@ -395,6 +419,8 @@ function bind() {
  * read still runs, every write button is disabled with a stated reason.
  */
 export async function mountSettlement(el, { wallet, reports }) {
+  if (txq) txq.dispose();
+  txq = null;
   host = el;
   state.wallet = wallet;
   state.reports = reports;
@@ -402,6 +428,7 @@ export async function mountSettlement(el, { wallet, reports }) {
     state.ruleHash = reports[0]?.rule_hash || UNTESTED_RULE;
     state.ruleLabel = reports[0]?.rule_label || "untested";
   }
+  state.loading = true;
   paint();
   await refreshRegistry();
   state.tolerance = state.registry.worst;
@@ -409,6 +436,19 @@ export async function mountSettlement(el, { wallet, reports }) {
 }
 
 export function updateSettlementWallet(wallet) {
+  const switched = state.wallet?.net?.label !== wallet?.net?.label;
   state.wallet = wallet;
-  if (host) paint();
+  if (!host) return;
+  // Publication badges are per-network, so a switch invalidates them outright.
+  if (switched) state.registry.published = {};
+  paint();
+  // The wallet header mounts concurrently with the reports, so its read client can
+  // arrive *after* this panel did -- and a network switch invalidates every value on
+  // screen. Either way the tiles are showing a reading of something else until this
+  // runs, so re-read rather than waiting for the user to press Refresh.
+  if (state.wallet?.reader && state.readKey !== readKey()) {
+    state.loading = true;
+    paint();
+    refreshRegistry().then(paint);
+  }
 }

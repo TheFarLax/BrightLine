@@ -10,6 +10,10 @@ independent models do not reach the same decision.
 The output that matters is not a score. It is a sentence: *here is the case where you
 don't get paid.*
 
+**Try it:** `.venv/bin/python scripts/serve.py` → <http://127.0.0.1:8800/frontend/>.
+The reports, the rule hasher and every chain read work with no wallet at all.
+Six-minute walkthrough: [docs/DEMO.md](docs/DEMO.md).
+
 ## The first real result
 
 Rule under test — the unimproved version a bounty program would actually write:
@@ -85,6 +89,18 @@ rule v2 written against those findings
 The fresh arm is not optional. Without it a rule can be tuned to pass a corpus it has
 already seen, and the number becomes theatre.
 
+What actually happened when v2 was written against v1's counterexamples
+([reports/retest.json](reports/retest.json)):
+
+```
+frozen set   K 4/8 → 4/8      mean divergence 0.3125 → 0.225
+                              2 counterexamples closed, 2 newly opened
+fresh set    K 2/8            mean divergence 0.0625
+```
+
+Better, not fixed — and the tool says so. The rewrite generalized to a probe set aimed
+at it, and it still leaves two of the original eight splitting the panel.
+
 ## Layout
 
 ```
@@ -98,11 +114,16 @@ brightline/                     spec · adversary · chain · panel · report ·
 scripts/e*.py                   the approval gates, each writing raw evidence
 experiments/                    raw gate output, kept
 reports/                        generated reports + every raw receipt
-frontend/                       viewer + settlement dApp (no build step)
-frontend/lib/                   gl.js (genlayer-js clients) · receipt.js · attest.js · render.js
-frontend/components/            wallet.js · tx.js · settlement.js
+frontend/                       the dApp (no build step; genlayer-js vendored)
+frontend/lib/                   gl.js (genlayer-js clients) · receipt.js · attest.js
+                                · hash.js (rule hashing, parity-tested vs Python) · render.js
+frontend/components/            wallet.js · tx.js · ruleinput.js · quickcheck.js · settlement.js
+scripts/build_static.py         assembles dist/ for a static host
 docs/VERIFIED_VS_ASSUMED.md     every GenLayer claim and its status
 docs/LIMITATIONS.md             what this does not measure
+docs/RESULTS.md                 the numbers, with provenance
+docs/DEPLOY.md                  building and hosting the dApp
+docs/DEMO.md                    the six-minute walkthrough
 ```
 
 ## Running it
@@ -128,7 +149,8 @@ Publish a report and exercise the escrow gate, then view it:
 .venv/bin/python scripts/serve.py            # http://127.0.0.1:8800/frontend/
 ```
 
-The viewer has four tabs, and the first two need no chain and no wallet:
+The dApp has four tabs, and they are one pipeline — fix what is being tested, adjudicate
+it live, read the counterexamples, gate the money:
 
 - **Reports** — the committed artifacts, counterexamples included.
 - **Agreement** — paste a rule and see its on-chain identity hashed in the browser;
@@ -143,6 +165,10 @@ The viewer has four tabs, and the first two need no chain and no wallet:
   tolerance below the worst published finding, or pick the untested rule. Refusals show
   the contract's own message and leave the deal `OPEN`.
 
+Reports and Agreement need no chain at all, and every registry and escrow read runs
+without a wallet too. Read-only is the default state, not a degraded one: only the
+buttons that sign are disabled, each with the reason stated.
+
 genlayer-js is vendored into `frontend/vendor/` (`node scripts/vendor_sdk.mjs`) so the
 dApp has no runtime CDN dependency; a dropped CDN sub-request used to kill the wallet
 path outright.
@@ -150,9 +176,32 @@ path outright.
 Wallet writes are studionet-only for now. Bradbury is CLI-only until genlayer-js is
 verified there; the UI states that rather than failing silently.
 
-Tests: `.venv/bin/python -m pytest tests/unit tests/direct -q` (66 pass, 3 skip by
-design) · `npm run test:all` (96 JS checks incl. a real Chromium run) ·
-`npm run test:live` (26 live studionet checks through the JS stack).
+### Deploying it
+
+```bash
+.venv/bin/python scripts/build_static.py      # -> dist/, about 920K
+npm run test:dist                             # builds it, serves only it, drives it
+```
+
+The dApp is static: no server, no API key, nothing to keep running. `dist/` mirrors the
+repo layout so the deployed URLs match `serve.py`'s exactly and there is no rewrite
+step. Any static host works over HTTPS — MetaMask will not inject a provider otherwise.
+Details and the excluded-files rationale in [docs/DEPLOY.md](docs/DEPLOY.md).
+
+### Tests
+
+| | |
+|---|---|
+| `.venv/bin/python -m pytest tests/unit tests/direct -q` | 66 pass, 3 skip by design |
+| `npm run test:all` | 119 JS checks, incl. 65 in a real Chromium against live studionet and a 9-check smoke test of the deployable bundle |
+| `npm run test:live` | 26 live studionet checks through the JS stack, real transactions |
+
+The browser suite covers read-only mode, the wallet RPC sequence against a mock
+EIP-1193 provider, both escrow refusal paths, rule hashing, the WAI-ARIA tab model, and
+a 390×844 phone viewport. What it cannot cover is real MetaMask and the real
+`npm:genlayer-wallet-plugin` Snap — those need a human to approve an install prompt.
+That flow has been walked manually and works; the automated evidence for it is the RPC
+sequence the suite prints.
 
 Bradbury (network truth, `scripts/e3_e4_bradbury.py`) needs a funded account; the
 faucet requires GitHub OAuth plus a Turnstile challenge, so that step is human.

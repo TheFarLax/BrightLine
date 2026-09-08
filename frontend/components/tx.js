@@ -42,8 +42,17 @@ const OUTCOME_TEXT = {
   error: "failed to submit",
 };
 
-export function createTxQueue(host, { net } = {}) {
+export function createTxQueue(initialHost, { net } = {}) {
   const rows = [];
+  let host = initialHost;
+  let ticker = null;
+
+  /** Seconds since submission. A consensus round takes tens of seconds, and a live
+   *  demo with no elapsed time reads as "hung" long before it actually is. */
+  const elapsed = (r) => {
+    const end = r.endedAt ?? Date.now();
+    return Math.max(0, Math.round((end - r.startedAt) / 1000));
+  };
 
   function paint() {
     if (!rows.length) {
@@ -57,13 +66,17 @@ export function createTxQueue(host, { net } = {}) {
                class="mono">${esc(short(r.hash))}</a>`
           : `<span class="mono">${esc(short(r.hash))}</span>`)
         : "";
+      const copy = r.hash
+        ? `<button type="button" class="txcopy" data-copy="${esc(r.hash)}">copy</button>`
+        : "";
       const spinner = r.terminal ? "" : `<span class="spin" aria-hidden="true"></span>`;
       return `<div class="txrow" data-i="${i}">
         <div class="txmain">
           ${spinner}
           <span class="txlabel">${esc(r.label)}</span>
           <span class="txstatus mono">${esc(r.status || "—")}</span>
-          ${link}
+          <span class="txelapsed">${elapsed(r)}s</span>
+          ${link}${copy}
         </div>
         <div class="txout ${esc(r.outcome || "pending")}">
           ${esc(OUTCOME_TEXT[r.outcome] || r.outcome || "")}
@@ -71,6 +84,21 @@ export function createTxQueue(host, { net } = {}) {
         </div>
       </div>`;
     }).join("");
+
+    for (const b of host.querySelectorAll("[data-copy]")) {
+      b.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(b.dataset.copy);
+          b.textContent = "copied";
+          setTimeout(() => { b.textContent = "copy"; }, 1200);
+        } catch { b.textContent = "press ⌘C"; }
+      });
+    }
+
+    // One timer for the whole queue, running only while something is in flight.
+    const live = rows.some((r) => r.endedAt === null);
+    if (live && !ticker) ticker = setInterval(paint, 1000);
+    if (!live && ticker) { clearInterval(ticker); ticker = null; }
   }
 
   /**
@@ -79,7 +107,10 @@ export function createTxQueue(host, { net } = {}) {
    */
   async function track({ label, submit, client }) {
     const row = { label, hash: null, status: "", outcome: "submitting",
-                  detail: "", terminal: false };
+                  detail: "", terminal: false, startedAt: Date.now(), endedAt: null };
+    // Stop the clock on every exit path, including the ones that are not `terminal`
+    // in the consensus sense (submit error, poll exhaustion).
+    const stop = () => { row.endedAt ??= Date.now(); };
     rows.push(row);
     paint();
 
@@ -94,7 +125,7 @@ export function createTxQueue(host, { net } = {}) {
       row.outcome = "error";
       row.detail = e?.message ? String(e.message) : String(e);
       row.terminal = true;
-      paint();
+      stop(); paint();
       return { ok: false, outcome: "error", error: row.detail, row };
     }
 
@@ -118,7 +149,7 @@ export function createTxQueue(host, { net } = {}) {
     if (!receipt) {
       row.outcome = "timeout";
       row.terminal = true;
-      paint();
+      stop(); paint();
       return { ok: false, outcome: "timeout", row };
     }
 
@@ -128,19 +159,19 @@ export function createTxQueue(host, { net } = {}) {
     if (kind === "no_consensus") {
       row.outcome = "no_consensus";
       row.detail = resultName(receipt) || "";
-      paint();
+      stop(); paint();
       return { ok: false, outcome: "no_consensus", receipt, hash, row };
     }
     if (kind === "canceled") {
       row.outcome = "canceled";
       row.terminal = true;
-      paint();
+      stop(); paint();
       return { ok: false, outcome: "canceled", receipt, hash, row };
     }
     if (!row.terminal) {
       row.outcome = "timeout";
       row.detail = `last status ${statusName(receipt)}`;
-      paint();
+      stop(); paint();
       return { ok: false, outcome: "timeout", receipt, hash, row };
     }
 
@@ -148,17 +179,35 @@ export function createTxQueue(host, { net } = {}) {
       // The committee agreed; the contract refused. This is the gate working.
       row.outcome = "refused";
       row.detail = revertMessage(receipt);
-      paint();
+      stop(); paint();
       return { ok: false, outcome: "refused", reason: row.detail, receipt, hash, row };
     }
 
     row.outcome = "done";
     const payload = extractReturn(receipt, ["state"]) || extractReturn(receipt);
     if (payload) row.detail = JSON.stringify(payload);
-    paint();
+    stop(); paint();
     return { ok: true, outcome: "done", payload, receipt, hash, row };
   }
 
   paint();
-  return { track, clear: () => { rows.length = 0; paint(); }, rows };
+  return {
+    track, rows,
+    clear: () => { rows.length = 0; paint(); },
+    /**
+     * Re-point the queue at a fresh DOM node after the owning panel repaints.
+     *
+     * The panels re-render wholesale, so without this the queue would be rebuilt on
+     * every state change and the history of a demo would vanish the moment a
+     * transaction settled -- exactly when a reviewer wants to look at it.
+     */
+    attach: (el, opts = {}) => {
+      host = el;
+      if (opts.net !== undefined) net = opts.net;
+      paint();
+    },
+    // Repainting a detached host leaks an interval per re-mount, and these panels
+    // re-mount on every wallet or network change.
+    dispose: () => { if (ticker) { clearInterval(ticker); ticker = null; } },
+  };
 }
