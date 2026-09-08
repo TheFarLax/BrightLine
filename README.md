@@ -118,12 +118,50 @@ frontend/                       the dApp (no build step; genlayer-js vendored)
 frontend/lib/                   gl.js (genlayer-js clients) · receipt.js · attest.js
                                 · hash.js (rule hashing, parity-tested vs Python) · render.js
 frontend/components/            wallet.js · tx.js · ruleinput.js · quickcheck.js · settlement.js
+frontend/assets/                logo.svg (source) · logo.png (rendered by scripts/render_logo.mjs)
 scripts/build_static.py         assembles dist/ for a static host
+tests/                          unit · direct (gltest) · frontend (node + Chromium + live)
+.github/workflows/pages.yml     manual-trigger deploy to GitHub Pages
 docs/VERIFIED_VS_ASSUMED.md     every GenLayer claim and its status
 docs/LIMITATIONS.md             what this does not measure
 docs/RESULTS.md                 the numbers, with provenance
 docs/DEPLOY.md                  building and hosting the dApp
 docs/DEMO.md                    the six-minute walkthrough
+```
+
+## Deployments
+
+Every number in this repo was produced by these contracts. Addresses are also carried
+inside each report's provenance block, and the frontend reads them from
+[`frontend/networks.json`](frontend/networks.json) rather than from anything hardcoded.
+
+**studionet** — the network all measurements ran on, and the one the dApp uses by
+default. `sim_config` model pinning is Studio-only, which is what makes the panel
+channel possible at all.
+
+| Contract | Address | Deploy tx |
+|---|---|---|
+| `BrightlineProbe` — adjudication | [`0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7`](https://explorer-studio.genlayer.com/address/0x0cC3f4684fBd89dB74331A702d09a67DCc6585f7) | `0x5be58be403f7fbaf109bac948f92b1e54f91060b50291a20332e3269ee878b20` |
+| `BrightlineRegistry` — published reports | [`0x8a3476D6c84cea489d4Eb9A0be744fe403560196`](https://explorer-studio.genlayer.com/address/0x8a3476D6c84cea489d4Eb9A0be744fe403560196) | `0x590ffb3035a72ece029c9de98150546078b1c86c27ca02073a6db68c391ebbdb` |
+| `GatedEscrow` — the money gate | [`0x3826C2374fBDBcb8a248e0523eF1f325b3F5A590`](https://explorer-studio.genlayer.com/address/0x3826C2374fBDBcb8a248e0523eF1f325b3F5A590) | `0xb6662bbcf603f3f67e61b8a04b5d7122a1ec59d9e83c43021fadeffc9e0cf13f` |
+
+`GatedEscrow` is constructed against that registry address, so the gate cannot be
+pointed at a friendlier one after the fact.
+
+**testnet-bradbury** — network truth only. `BrightlineProbe` is deployed at
+`0xebd5A75F832985C3e3ddeFe2f60c7B7eA97C3880` (deploy tx
+`0x4eb2ff08616a7aea853208b4532eaac1ef4085399f891e7d5f44355fb4e84b9c`), and E3/E4 both
+pass there: a real transaction reached `Accepted`/`FinishedWithReturn` and validator
+vote bytes were decoded off a live receipt. No registry or escrow is deployed there, and
+the dApp keeps wallet writes **off** for Bradbury — genlayer-py needed an explicit gas
+limit to land a write and genlayer-js is unverified on that network. Every *measurement*
+in this repo is a studionet measurement; what Bradbury establishes is that the contract
+path and the receipt reading are real on a public network.
+
+Redeploying regenerates `frontend/networks.json`:
+
+```bash
+.venv/bin/python scripts/export_frontend_config.py
 ```
 
 ## Running it
@@ -179,14 +217,16 @@ verified there; the UI states that rather than failing silently.
 ### Deploying it
 
 ```bash
-.venv/bin/python scripts/build_static.py      # -> dist/, about 920K
+.venv/bin/python scripts/build_static.py      # -> dist/, about 965K
 npm run test:dist                             # builds it, serves only it, drives it
 ```
 
 The dApp is static: no server, no API key, nothing to keep running. `dist/` mirrors the
 repo layout so the deployed URLs match `serve.py`'s exactly and there is no rewrite
 step. Any static host works over HTTPS — MetaMask will not inject a provider otherwise.
-Details and the excluded-files rationale in [docs/DEPLOY.md](docs/DEPLOY.md).
+[`.github/workflows/pages.yml`](.github/workflows/pages.yml) publishes to GitHub Pages
+on a manual trigger. Details and the excluded-files rationale in
+[docs/DEPLOY.md](docs/DEPLOY.md).
 
 ### Tests
 

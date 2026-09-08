@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import argparse
 import http.server
+import json
 import shutil
 import socketserver
 import subprocess
@@ -82,8 +83,19 @@ def copy_tree(src: Path, dst: Path, *, patterns: list[str] | None = None) -> lis
 def build(out: Path) -> Path:
     # Regenerate both machine-written inputs first, so a stale index or a network
     # config from an older deployment can never be what gets published.
-    subprocess.run([sys.executable, str(ROOT / "scripts" / "export_frontend_config.py")],
-                   check=True)
+    #
+    # Except on a machine that has no deployment record. `.brightline/` is gitignored,
+    # so a clean checkout -- a CI runner, a judge building this themselves -- has no
+    # addresses to export, and regenerating there would overwrite the committed
+    # `networks.json` with nulls and publish a dApp that reads nothing. Keeping the
+    # committed file is the correct answer in that case; the usable-network check below
+    # is what makes the choice safe either way.
+    if (ROOT / ".brightline" / "deployments.json").exists():
+        subprocess.run([sys.executable, str(ROOT / "scripts" / "export_frontend_config.py")],
+                       check=True)
+    else:
+        print("no .brightline/deployments.json — keeping the committed "
+              "frontend/networks.json")
     from serve import build_index          # noqa: E402  (path set above)
     index = build_index()
 
@@ -129,7 +141,18 @@ def build(out: Path) -> Path:
     if leaked:
         raise SystemExit(f"private or oversized files leaked into dist: {leaked[:5]}")
 
+    # An empty config is a page that renders and does nothing -- every chain read fails
+    # and every write button stays disabled with no obvious cause. Cheaper to catch here
+    # than in a reviewer's browser.
+    cfg = json.loads((out / "frontend" / "networks.json").read_text())
+    usable = [n for n, v in cfg["networks"].items() if v.get("usable")]
+    if not usable:
+        raise SystemExit("frontend/networks.json has no usable network: no contract "
+                         "addresses would reach the browser. Run "
+                         "scripts/export_frontend_config.py against a real deployment.")
+
     print(f"\n  {len(required)} required asset(s) present, nothing private included")
+    print(f"  usable network(s): {', '.join(usable)}")
     return out
 
 

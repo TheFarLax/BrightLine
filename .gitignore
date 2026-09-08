@@ -9,6 +9,7 @@ node_modules/
 # Build and cache output
 __pycache__/
 *.pyc
+.pytest_cache/
 artifacts/
 frontend/vendor/.entry.mjs
 # Deployable bundle: a copy of files already in the repo, rebuilt by

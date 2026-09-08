@@ -4,7 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Brightline — agreement fuzzer</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232a78d6'/%3E%3Crect x='4' y='7' width='8' height='2' rx='1' fill='white'/%3E%3C/svg%3E">
+<meta name="description" content="Brightline generates adversarial fact patterns against a
+  resolution rule, adjudicates each one on GenLayer, and reports the exact scenarios where
+  independent validators do not reach the same decision.">
+<!-- Relative so they resolve identically under scripts/serve.py and in the built dist/.
+     og:image is relative too: the deployment URL is not known at build time, and the
+     platforms that require an absolute one degrade to no preview rather than a broken one. -->
+<link rel="icon" href="assets/logo.svg">
+<link rel="apple-touch-icon" href="assets/logo.png">
+<meta property="og:title" content="Brightline">
+<meta property="og:description" content="An agreement fuzzer, run by the network that will
+  later judge the agreement.">
+<meta property="og:image" content="assets/logo.png">
 <style>
   .viz-root {
     color-scheme: light;
@@ -58,6 +69,9 @@
   :focus-visible { outline: 2px solid var(--series-1); outline-offset: 2px;
                    border-radius: 4px; }
   h1 { font-size: 1.55rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+  .brand img { border-radius: 9px; flex: none; }
+  .brand h1 { margin: 0; }
   h2 { font-size: 1.0rem; margin: 40px 0 12px; letter-spacing: 0.02em;
        text-transform: uppercase; color: var(--text-secondary); font-weight: 600; }
   p  { color: var(--text-secondary); margin: 0 0 12px; }
@@ -247,7 +261,12 @@
 <body>
 <div class="viz-root">
 <div class="wrap">
-  <h1>Brightline</h1>
+  <!-- The mark carries the finding: one line in, three decisions out. It is decorative
+       beside a real <h1>, so it is hidden from assistive tech rather than described twice. -->
+  <div class="brand">
+    <img src="assets/logo.svg" width="40" height="40" alt="" aria-hidden="true">
+    <h1>Brightline</h1>
+  </div>
   <p class="lede">An agreement fuzzer, run by the network that will later judge the
   agreement. Every number below comes from real GenLayer transactions.</p>
 

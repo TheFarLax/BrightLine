@@ -10,7 +10,7 @@ reader can recompute it, so the page must not sit between them and the chain.
 ## Build
 
 ```bash
-.venv/bin/python scripts/build_static.py     # -> dist/   (~920K)
+.venv/bin/python scripts/build_static.py     # -> dist/   (~965K)
 ```
 
 The script regenerates the two machine-written inputs first — `frontend/networks.json`
@@ -19,10 +19,10 @@ disk — then copies:
 
 ```
 dist/index.html          redirect to frontend/
-dist/frontend/           the app, verbatim (incl. vendor/genlayer-js.js)
+dist/frontend/           the app, verbatim (incl. vendor/genlayer-js.js and assets/)
 dist/reports/*.json|md   the published reports and the re-test diff
 dist/probes/ps_*.json    frozen probe manifests
-dist/docs/*.md           limitations, results, verified-vs-assumed
+dist/docs/*.md           limitations, results, verified-vs-assumed, deploy, demo
 ```
 
 `dist/` mirrors the repository's layout rather than flattening it, because every path
@@ -42,7 +42,7 @@ npm run test:dist        # builds dist/, serves only dist/, drives it in Chromiu
 ```
 
 Nine checks: the root redirect lands on the app, a report renders from the bundled
-artifacts, the vendored SDK reads live studionet state, all four panels mount, probe
+artifacts, the vendored SDK reads live studionet state, every tab mounts, probe
 manifests shipped, and **no request 404s**. That last one is the reason this test
 exists — `serve.py` serves the whole repository, so a file that was never copied into
 `dist/` is invisible locally and fatal in production.
@@ -64,14 +64,19 @@ Any static host works. Two requirements only:
 
 No SPA fallback or rewrite rule is needed — every URL is a real file.
 
-```bash
-# GitHub Pages, from a clean checkout
-.venv/bin/python scripts/build_static.py
-npx gh-pages -d dist
+**GitHub Pages** — [`.github/workflows/pages.yml`](../.github/workflows/pages.yml) does
+it. Set *Settings → Pages → Source* to **GitHub Actions**, then run the workflow from
+the Actions tab. It is `workflow_dispatch` only: publishing a public site is a decision,
+not a side effect of committing.
 
-# Netlify / Cloudflare Pages / Vercel: publish directory = dist, build command =
-# .venv/bin/python scripts/build_static.py  (or upload dist/ directly)
-```
+**Anything else** — Netlify, Cloudflare Pages, Vercel: publish directory `dist`, build
+command `python scripts/build_static.py`, or just upload `dist/` by hand.
+
+The build needs no dependencies on a clean checkout. `.brightline/` (the deployment
+record) is gitignored, so on a machine without it the script keeps the committed
+`frontend/networks.json` rather than regenerating it into nulls — and then refuses to
+finish if that file names no usable network. On a machine that *does* have the record,
+the config is regenerated from it, so a redeployment can never publish stale addresses.
 
 `dist/` is gitignored. It is a copy of files already in the repository and rebuilds in
 about a second; committing it would create a second copy of every report that can go
