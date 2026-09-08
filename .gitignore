@@ -1,0 +1,24 @@
+# Dependencies — restorable from package.json / requirements
+node_modules/
+.venv/
+
+# Local dev keys and deployment bookkeeping. Never publish.
+.brightline/
+.env
+
+# Build and cache output
+__pycache__/
+*.pyc
+.pytest_cache/
+artifacts/
+frontend/vendor/.entry.mjs
+# Deployable bundle: a copy of files already in the repo, rebuilt by
+# `python scripts/build_static.py` in one second. Committing it would create a second
+# copy of every report that can silently go stale.
+dist/
+
+# NOT ignored, deliberately:
+#   frontend/vendor/genlayer-js.js  -- vendored SDK, committed so the dApp has no
+#                                      runtime CDN dependency
+#   reports/raw/**, experiments/**  -- raw receipts and gate output. This is the
+#                                      evidence every claim in docs/ rests on.

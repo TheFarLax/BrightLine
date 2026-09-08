@@ -1,0 +1,24 @@
+<!-- Brightline mark.
+
+     One line enters. It does not stay one line: at the point where the rule stops
+     saying what happens, it forks into three. That is the product's actual finding --
+     six frontier models, one sentence of contract, three different decisions
+     (ACCEPT / INSUFFICIENT / REJECT) -- drawn rather than described.
+
+     White is the agreement as written; the blues are what the network answered. The
+     colour changes exactly at the branch point, because otherwise the middle branch is
+     collinear with the input and the whole thing reads as one line with a chevron on
+     it. Geometry is deliberately coarse so the fork still resolves at 32px. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512"
+     role="img" aria-label="Brightline">
+  <title>Brightline</title>
+  <rect width="512" height="512" rx="96" fill="#121211"/>
+  <g fill="none" stroke-width="32" stroke-linecap="round">
+    <!-- the agreement, as written: one clear line -->
+    <path stroke="#f4f3f0" d="M80 256 H216"/>
+    <!-- what the panel actually returned -->
+    <path stroke="#7fb4f0" d="M216 256 L432 136"/>
+    <path stroke="#3987e5" d="M216 256 H432"/>
+    <path stroke="#1f5fae" d="M216 256 L432 376"/>
+  </g>
+</svg>

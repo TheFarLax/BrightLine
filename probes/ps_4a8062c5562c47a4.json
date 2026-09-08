@@ -1,0 +1,313 @@
+{
+  "schema": "brightline.probeset/1",
+  "probe_set_id": "ps_4a8062c5562c47a4",
+  "generated_from": {
+    "rule_hash": "0xaf58b67a93782d1cc0653d9ba70cab0eee9f39b2e79f9321fbd76099bb201562",
+    "rule_label": "v2",
+    "adversary_version": "adv-v1.0.0",
+    "adversary_prompt_hash": "0x08391c62bcae8c4105b4dadabb5af678c7607bdf56d06648d0ab2d4ebd5aa1a8",
+    "generator": "authored",
+    "generator_model": "claude-opus-5",
+    "corpus": "working_fix_fresh",
+    "salt": "0x02",
+    "seed": "0xe1c85d47a9a893db748957f3e42f376a47d23d6c5c85aac4498f73ed034d34a5"
+  },
+  "n_probes": 8,
+  "family_quota": {
+    "regression_after_fix": 1,
+    "conflicting_evidence": 2,
+    "late_evidence": 1,
+    "partial_completion": 2,
+    "missing_confirmation": 1,
+    "criteria_gap": 1
+  },
+  "family_counts": {
+    "conflicting_evidence": 2,
+    "criteria_gap": 1,
+    "late_evidence": 1,
+    "missing_confirmation": 1,
+    "partial_completion": 2,
+    "regression_after_fix": 1
+  },
+  "probes": [
+    {
+      "index": 0,
+      "family": "conflicting_evidence",
+      "probe_id": "0x49cecb3cb5603ca23b33b921f704cbc9bc6eeaddfca04f13d14071d96a6305da",
+      "scenario": {
+        "narrative": "The designated check suite reported every check passing on the contributor's final commit. Four hours later the same suite was re-run on the identical commit by a maintainer and reported two checks failing. Nothing in the repository changed between the two runs.",
+        "facts": [
+          {
+            "k": "designated_suite_run_1",
+            "v": "all pass"
+          },
+          {
+            "k": "designated_suite_run_2_same_commit",
+            "v": "2 failing"
+          },
+          {
+            "k": "repository_changed_between_runs",
+            "v": "no"
+          },
+          {
+            "k": "which_run_is_authoritative_stated",
+            "v": "no"
+          }
+        ],
+        "evidence_available": [
+          "suite_log_run_1",
+          "suite_log_run_2",
+          "commit_sha"
+        ],
+        "evidence_absent": [
+          "rule_on_repeated_runs"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"rule_on_repeated_runs\"],\"evidence_available\":[\"suite_log_run_1\",\"suite_log_run_2\",\"commit_sha\"],\"facts\":[{\"k\":\"designated_suite_run_1\",\"v\":\"all pass\"},{\"k\":\"designated_suite_run_2_same_commit\",\"v\":\"2 failing\"},{\"k\":\"repository_changed_between_runs\",\"v\":\"no\"},{\"k\":\"which_run_is_authoritative_stated\",\"v\":\"no\"}],\"narrative\":\"The designated check suite reported every check passing on the contributor's final commit. Four hours later the same suite was re-run on the identical commit by a maintainer and reported two checks failing. Nothing in the repository changed between the two runs.\"}"
+    },
+    {
+      "index": 1,
+      "family": "missing_confirmation",
+      "probe_id": "0xb7429eea1edf0346a8a0a0392144cfef3339c1197352c233568479aeff4f5e0d",
+      "scenario": {
+        "narrative": "The contributor pushed before the cutoff. The designated check suite was removed from the project six days later and replaced by a differently named suite. The new suite reports all checks passing. Eleven days have passed since the push and no maintainer has stated a position.",
+        "facts": [
+          {
+            "k": "pushed_before_cutoff",
+            "v": "yes"
+          },
+          {
+            "k": "designated_suite_still_exists",
+            "v": "no"
+          },
+          {
+            "k": "replacement_suite_result",
+            "v": "all pass"
+          },
+          {
+            "k": "days_since_push",
+            "v": "11"
+          },
+          {
+            "k": "maintainer_position",
+            "v": "none"
+          }
+        ],
+        "evidence_available": [
+          "push_timestamp",
+          "replacement_suite_log",
+          "suite_removal_commit"
+        ],
+        "evidence_absent": [
+          "designated_suite_result",
+          "maintainer_statement"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"designated_suite_result\",\"maintainer_statement\"],\"evidence_available\":[\"push_timestamp\",\"replacement_suite_log\",\"suite_removal_commit\"],\"facts\":[{\"k\":\"pushed_before_cutoff\",\"v\":\"yes\"},{\"k\":\"designated_suite_still_exists\",\"v\":\"no\"},{\"k\":\"replacement_suite_result\",\"v\":\"all pass\"},{\"k\":\"days_since_push\",\"v\":\"11\"},{\"k\":\"maintainer_position\",\"v\":\"none\"}],\"narrative\":\"The contributor pushed before the cutoff. The designated check suite was removed from the project six days later and replaced by a differently named suite. The new suite reports all checks passing. Eleven days have passed since the push and no maintainer has stated a position.\"}"
+    },
+    {
+      "index": 2,
+      "family": "partial_completion",
+      "probe_id": "0x688f4f5daa144b12522e776951d59ceb62166ddcc9c1b4b21e85fcf2221c5da9",
+      "scenario": {
+        "narrative": "Three reproduction paths were recorded on the issue when the bounty was posted. The contributor resolved two of them. A fourth reproduction path was added to the issue by a third party after the bounty was posted, and it still reproduces.",
+        "facts": [
+          {
+            "k": "paths_recorded_at_posting",
+            "v": "3"
+          },
+          {
+            "k": "paths_resolved",
+            "v": "2"
+          },
+          {
+            "k": "path_added_after_posting",
+            "v": "1, still reproducing"
+          },
+          {
+            "k": "designated_suite",
+            "v": "all pass"
+          }
+        ],
+        "evidence_available": [
+          "issue_history_with_timestamps",
+          "suite_log"
+        ],
+        "evidence_absent": []
+      },
+      "canonical": "{\"evidence_absent\":[],\"evidence_available\":[\"issue_history_with_timestamps\",\"suite_log\"],\"facts\":[{\"k\":\"paths_recorded_at_posting\",\"v\":\"3\"},{\"k\":\"paths_resolved\",\"v\":\"2\"},{\"k\":\"path_added_after_posting\",\"v\":\"1, still reproducing\"},{\"k\":\"designated_suite\",\"v\":\"all pass\"}],\"narrative\":\"Three reproduction paths were recorded on the issue when the bounty was posted. The contributor resolved two of them. A fourth reproduction path was added to the issue by a third party after the bounty was posted, and it still reproduces.\"}"
+    },
+    {
+      "index": 3,
+      "family": "regression_after_fix",
+      "probe_id": "0x09a0e617e35ac3e09aef3bf11aa0440c41a35c426939977b7ed837fbc020e10d",
+      "scenario": {
+        "narrative": "On the parent commit the designated suite had one check already failing for unrelated reasons. On the contributor's final commit that check still fails and every other check passes. The reported defect is closed.",
+        "facts": [
+          {
+            "k": "parent_commit_failing_checks",
+            "v": "1 (unrelated)"
+          },
+          {
+            "k": "final_commit_failing_checks",
+            "v": "same 1"
+          },
+          {
+            "k": "newly_failing_checks",
+            "v": "0"
+          },
+          {
+            "k": "reported_defect_closed",
+            "v": "yes"
+          }
+        ],
+        "evidence_available": [
+          "suite_log_parent",
+          "suite_log_final"
+        ],
+        "evidence_absent": []
+      },
+      "canonical": "{\"evidence_absent\":[],\"evidence_available\":[\"suite_log_parent\",\"suite_log_final\"],\"facts\":[{\"k\":\"parent_commit_failing_checks\",\"v\":\"1 (unrelated)\"},{\"k\":\"final_commit_failing_checks\",\"v\":\"same 1\"},{\"k\":\"newly_failing_checks\",\"v\":\"0\"},{\"k\":\"reported_defect_closed\",\"v\":\"yes\"}],\"narrative\":\"On the parent commit the designated suite had one check already failing for unrelated reasons. On the contributor's final commit that check still fails and every other check passes. The reported defect is closed.\"}"
+    },
+    {
+      "index": 4,
+      "family": "late_evidence",
+      "probe_id": "0x0f5b933cc82553149d852d5ba5df84b8b59c5855ce3a19dca90f5dc155327ca1",
+      "scenario": {
+        "narrative": "The contributor pushed a commit before the cutoff, then pushed a second commit ninety minutes after the cutoff that only reformatted whitespace. The designated suite passed on the second commit and was never run on the first.",
+        "facts": [
+          {
+            "k": "first_push",
+            "v": "before cutoff"
+          },
+          {
+            "k": "second_push",
+            "v": "90 min after cutoff"
+          },
+          {
+            "k": "second_push_content",
+            "v": "whitespace only"
+          },
+          {
+            "k": "suite_ran_on",
+            "v": "second commit only"
+          },
+          {
+            "k": "suite_result",
+            "v": "all pass"
+          }
+        ],
+        "evidence_available": [
+          "both_push_timestamps",
+          "diff_between_commits",
+          "suite_log"
+        ],
+        "evidence_absent": [
+          "suite_result_for_first_commit"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"suite_result_for_first_commit\"],\"evidence_available\":[\"both_push_timestamps\",\"diff_between_commits\",\"suite_log\"],\"facts\":[{\"k\":\"first_push\",\"v\":\"before cutoff\"},{\"k\":\"second_push\",\"v\":\"90 min after cutoff\"},{\"k\":\"second_push_content\",\"v\":\"whitespace only\"},{\"k\":\"suite_ran_on\",\"v\":\"second commit only\"},{\"k\":\"suite_result\",\"v\":\"all pass\"}],\"narrative\":\"The contributor pushed a commit before the cutoff, then pushed a second commit ninety minutes after the cutoff that only reformatted whitespace. The designated suite passed on the second commit and was never run on the first.\"}"
+    },
+    {
+      "index": 5,
+      "family": "criteria_gap",
+      "probe_id": "0xf4bf8dd8ac74c4e3a6cc8c7b2c171ed160bab134bbf1f2d33f89bf2c5742948b",
+      "scenario": {
+        "narrative": "The listing stated that the operation must complete in under ten seconds. The contributor's change brings it to 9.4 seconds on the project's reference machine and 12.1 seconds on the machine the reporter used. The listing did not say which machine the threshold applies to.",
+        "facts": [
+          {
+            "k": "stated_threshold",
+            "v": "10s"
+          },
+          {
+            "k": "runtime_reference_machine",
+            "v": "9.4s"
+          },
+          {
+            "k": "runtime_reporter_machine",
+            "v": "12.1s"
+          },
+          {
+            "k": "machine_specified_in_listing",
+            "v": "no"
+          }
+        ],
+        "evidence_available": [
+          "listing_text",
+          "benchmark_both_machines"
+        ],
+        "evidence_absent": [
+          "designated_measurement_environment"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"designated_measurement_environment\"],\"evidence_available\":[\"listing_text\",\"benchmark_both_machines\"],\"facts\":[{\"k\":\"stated_threshold\",\"v\":\"10s\"},{\"k\":\"runtime_reference_machine\",\"v\":\"9.4s\"},{\"k\":\"runtime_reporter_machine\",\"v\":\"12.1s\"},{\"k\":\"machine_specified_in_listing\",\"v\":\"no\"}],\"narrative\":\"The listing stated that the operation must complete in under ten seconds. The contributor's change brings it to 9.4 seconds on the project's reference machine and 12.1 seconds on the machine the reporter used. The listing did not say which machine the threshold applies to.\"}"
+    },
+    {
+      "index": 6,
+      "family": "conflicting_evidence",
+      "probe_id": "0xa01d1deb7f27405596177a24578a9e1f713ab4d49ebead339f5e2350ed8e2e4d",
+      "scenario": {
+        "narrative": "The designated check suite reports all checks passing. A maintainer wrote that the change is wrong, will be reverted, and should not be paid. The change has not been reverted. The reported defect no longer reproduces.",
+        "facts": [
+          {
+            "k": "designated_suite",
+            "v": "all pass"
+          },
+          {
+            "k": "maintainer_statement",
+            "v": "wrong, will revert, do not pay"
+          },
+          {
+            "k": "actually_reverted",
+            "v": "no"
+          },
+          {
+            "k": "defect_reproduces",
+            "v": "no"
+          }
+        ],
+        "evidence_available": [
+          "suite_log",
+          "maintainer_comment",
+          "branch_history"
+        ],
+        "evidence_absent": []
+      },
+      "canonical": "{\"evidence_absent\":[],\"evidence_available\":[\"suite_log\",\"maintainer_comment\",\"branch_history\"],\"facts\":[{\"k\":\"designated_suite\",\"v\":\"all pass\"},{\"k\":\"maintainer_statement\",\"v\":\"wrong, will revert, do not pay\"},{\"k\":\"actually_reverted\",\"v\":\"no\"},{\"k\":\"defect_reproduces\",\"v\":\"no\"}],\"narrative\":\"The designated check suite reports all checks passing. A maintainer wrote that the change is wrong, will be reverted, and should not be paid. The change has not been reverted. The reported defect no longer reproduces.\"}"
+    },
+    {
+      "index": 7,
+      "family": "partial_completion",
+      "probe_id": "0xf267a2d8b2998e0e1b4801e2d8c91c7c2ed75b2d1b535a86782ed2db121595e3",
+      "scenario": {
+        "narrative": "Two reproduction paths were recorded when the bounty was posted. The contributor's change resolves one path and makes the second path harder to trigger but still reachable under load. The designated suite passes.",
+        "facts": [
+          {
+            "k": "paths_recorded",
+            "v": "2"
+          },
+          {
+            "k": "paths_fully_resolved",
+            "v": "1"
+          },
+          {
+            "k": "second_path_status",
+            "v": "still reachable under load"
+          },
+          {
+            "k": "designated_suite",
+            "v": "all pass"
+          }
+        ],
+        "evidence_available": [
+          "suite_log",
+          "load_test_output"
+        ],
+        "evidence_absent": [
+          "definition_of_resolved"
+        ]
+      },
+      "canonical": "{\"evidence_absent\":[\"definition_of_resolved\"],\"evidence_available\":[\"suite_log\",\"load_test_output\"],\"facts\":[{\"k\":\"paths_recorded\",\"v\":\"2\"},{\"k\":\"paths_fully_resolved\",\"v\":\"1\"},{\"k\":\"second_path_status\",\"v\":\"still reachable under load\"},{\"k\":\"designated_suite\",\"v\":\"all pass\"}],\"narrative\":\"Two reproduction paths were recorded when the bounty was posted. The contributor's change resolves one path and makes the second path harder to trigger but still reachable under load. The designated suite passes.\"}"
+    }
+  ]
+}
