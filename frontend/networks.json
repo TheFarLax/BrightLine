@@ -1,6 +1,6 @@
 {
   "schema": "brightline.networks/1",
-  "default": "studionet",
+  "default": "studio-next",
   "networks": {
     "localnet": {
       "label": "localnet",
@@ -10,7 +10,9 @@
       "api": "studio",
       "faucet": "sim",
       "explorer_tx": null,
-      "wallet_writes": true,
+      "explorer_address": null,
+      "runner": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
+      "wallet_writes": false,
       "wallet_note": "",
       "supports_sim_config": true,
       "contracts": {
@@ -18,6 +20,7 @@
         "registry": null,
         "escrow": null
       },
+      "deployed": false,
       "usable": false
     },
     "studionet": {
@@ -28,8 +31,10 @@
       "api": "studio",
       "faucet": "sim",
       "explorer_tx": "https://explorer-studio.genlayer.com/tx/",
-      "wallet_writes": true,
-      "wallet_note": "",
+      "explorer_address": "https://explorer-studio.genlayer.com/address/",
+      "runner": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
+      "wallet_writes": false,
+      "wallet_note": "stable Studio, chain 61999: where every published measurement was taken. Its contracts are the GenVM 0.2 build, and the genlayer-js 2.0.0-rc.1 bundle this dApp needs for Studio Next cannot query it. The reports and receipts below are that evidence and need no chain; reproduce them from the CLI with --network studionet",
       "supports_sim_config": true,
       "contracts": {
         "probe": {
@@ -51,6 +56,43 @@
           "current": true
         }
       },
+      "deployed": true,
+      "usable": false
+    },
+    "studio-next": {
+      "label": "studio-next",
+      "js_chain": "studioDevnet",
+      "rpc": "https://studio-next.genlayer.com/api",
+      "chain_id": 61997,
+      "api": "studio",
+      "faucet": "sim",
+      "explorer_tx": "https://explorer-studio-dev.genlayer.com/tx/",
+      "explorer_address": "https://explorer-studio-dev.genlayer.com/address/",
+      "runner": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+      "wallet_writes": true,
+      "wallet_note": "",
+      "supports_sim_config": true,
+      "contracts": {
+        "probe": {
+          "address": "0x025AF20b0eCD703Ab079568c24861308F09bD77d",
+          "code_hash": "0x9f264ab4e7a7c455def50e2387194c329c4956ab223c5c13768c99ad07132bad",
+          "runner": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+          "current": true
+        },
+        "registry": {
+          "address": "0xBFE7D9f45241B7baD76f79A265e03703314100E1",
+          "code_hash": "0x8a35144e13399180ae1cce9ce0f0ce6f54fdb882ef6531ee2d9f24d5d93a967e",
+          "runner": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+          "current": true
+        },
+        "escrow": {
+          "address": "0x8467f1027A9657A90a26e9127aD24772837fC612",
+          "code_hash": "0xb796edb8b28036940926c6b01faae904ffef39c5dbb1a1d8424b1c0955071472",
+          "runner": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+          "current": true
+        }
+      },
+      "deployed": true,
       "usable": true
     },
     "testnet-bradbury": {
@@ -61,6 +103,8 @@
       "api": "node",
       "faucet": "external",
       "explorer_tx": "https://explorer-bradbury.genlayer.com/tx/",
+      "explorer_address": "https://explorer-bradbury.genlayer.com/address/",
+      "runner": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
       "wallet_writes": false,
       "wallet_note": "CLI-only for now: genlayer-py needed an explicit gas limit to land a write here and genlayer-js is unverified on this network",
       "supports_sim_config": false,
@@ -74,6 +118,7 @@
         "registry": null,
         "escrow": null
       },
+      "deployed": false,
       "usable": false
     },
     "testnet-asimov": {
@@ -84,6 +129,8 @@
       "api": "node",
       "faucet": "external",
       "explorer_tx": "https://explorer-asimov.genlayer.com/tx/",
+      "explorer_address": null,
+      "runner": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6",
       "wallet_writes": false,
       "wallet_note": "untested",
       "supports_sim_config": false,
@@ -92,6 +139,7 @@
         "registry": null,
         "escrow": null
       },
+      "deployed": false,
       "usable": false
     }
   },

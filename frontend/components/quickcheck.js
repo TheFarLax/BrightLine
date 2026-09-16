@@ -2,12 +2,14 @@
  *
  * IMPORTANT SCOPE NOTE, and the reason this is not a browser panel run:
  *
- * genlayer-js 1.1.8 has no `simConfig` parameter on `writeContract`. Passing one is
- * silently ignored — verified on studionet by requesting three different models and
+ * genlayer-js has no `simConfig` parameter on `writeContract`. Passing one is silently
+ * ignored — verified on studionet under 1.1.8 by requesting three different models and
  * watching the network pick three unrelated ones (kimi -> grok, gemini-3-flash ->
- * gemini, qwen -> gpt-5.4). So the browser cannot pin a model, which means it cannot
- * reproduce the PANEL channel at all. Only the Python CLI can, because genlayer-py
- * forwards `sim_config` on the RPC call.
+ * gemini, qwen -> gpt-5.4). Still true of 2.0.0-rc.1, the version now vendored: the
+ * string `simConfig` does not occur anywhere in the bundle, and `writeContract` takes
+ * `fees` where the Python SDK takes `sim_config`. So the browser cannot pin a model,
+ * which means it cannot reproduce the PANEL channel at all. Only the Python CLI can,
+ * because genlayer-py forwards `sim_config` on the RPC call.
  *
  * Rather than fake a panel, Quick Check does the thing the browser can do honestly:
  * run the SAME probe N times against the live committee and show what comes back. That
