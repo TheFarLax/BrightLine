@@ -123,3 +123,27 @@ empirically here, `[A]` still an assumption, `[X]` refuted.
 | Studionet answers every browser read | `[X]` refuted | Under load it intermittently returns a rate-limited response with no `Access-Control-Allow-Origin`, which the browser reports as CORS. Reads now retry with backoff, and an unreadable publication check renders as unknown rather than as "not published" |
 | Browser rule hashing matches the CLI | `[E]` | `tests/frontend/hash_parity.mjs` — 20 awkward strings (NBSP, combining marks, ligatures, fullwidth, CJK, emoji, smart quotes), both committed agreements, and the hash inside the published v1 report |
 | Probe ids can be recomputed in JS | `[A]` **deliberately not attempted** | Python's canonical JSON and `JSON.stringify` disagree on key ordering and escaping. Ids are read from the content-addressed manifest, which refuses to load if edited |
+
+## Studio Next, chain 61997 (the migration)
+
+Full write-up, with the diagnosis behind each row: [STUDIO_NEXT.md](STUDIO_NEXT.md).
+
+| Claim | Status | Evidence |
+|---|---|---|
+| "Studio Next" is a real network at chain 61997 | `[E]` | `eth_chainId` → `0xf22d` on both `studio-next.genlayer.com/api` and `studio-dev.genlayer.com/api`; `ping` → `OK`; `sim_getProvidersAndModels` and `eth_blockNumber` both answer |
+| Those two hostnames are one chain, not two | `[E]` | One `sim_fundAccount` call, then the same balance (`0x56bc75e2d63100000`) read back from both hosts for the same address |
+| The 61999 addresses can be reused on 61997 | `[X]` **refuted** | Separate chain, separate state. `get_balance` on the deploy account was 0 there, and the old contract addresses hold no code. All three redeployed |
+| genlayer-py 0.16.3 can transact on 61997 | `[X]` **refuted** | It encodes the flat six-arg `addTransaction`; 61997's consensus contract takes one packed tuple plus `deploySalted`. Different selector → EVM revert with no reason string. Fixed by 0.19.0rc2 |
+| A v0.6 transaction can omit fees | `[X]` **refuted** | `FeesDistributionMissing` on deploy, then `FeeValueMustBeNonZero(1)` from the JS path. Fee policy is `enabled: true`; a quote is ~0.1 GEN. Both SDKs now quote before sending |
+| The documented production runner works on 61997 | `[X]` **refuted** | `py-genlayer:1jb45aa8…`, the runner in GenLayer's own docs and in every published measurement here, returns `invalid_contract runner malformed`. So does every other `name:hash` pair in the local v0.3.0-rc7 archive. 61997 wants `py-genlayer:5jycge4q8k…` |
+| The contracts compile unchanged under GenVM 0.3 | `[X]` **refuted** | `NameError: allow_storage`, then `gl` absent from the wildcard export, then `gl.Contract` / `gl.contract_interface` gone. Five names moved; `brightline/genvm03.py` maps them |
+| `gl.public.*`, `gl.vm.UserError/Return/Result`, `gl.message.*`, `gl.storage.inmem_allocate`, `gl.nondet.exec_prompt` survive 0.3 | `[E]` | Probed attribute by attribute against the live 61997 runner through `gen_getContractSchemaForCode`, not assumed |
+| The ported source is the same contract | `[E]` | Same method set from `gen_getContractSchemaForCode` on 61997 as the original gives on 61999, all three contracts. `tests/unit/test_genvm03.py` (22 checks) pins the diff to the documented rewrites and asserts the refusal strings and decision vocabulary are byte-identical |
+| The escrow on 61997 gates on the 61997 registry | `[E]` | `registry_address()` read back off chain → `0xBFE7D9f4…4100E1`, the registry deployed in the same run |
+| The gate behaves identically on 61997 | `[E]` | 20/20 live, `scripts/verify_studio_next.py`: the refusal *"rule has 4 counterexamples, deal tolerates 3"* with the deal still `OPEN` at tolerance 3, a new deal at 4 locking with `counterexamples_at_lock = 4`, and the untested-rule refusal |
+| The nondet path survives the `run_nondet_unsafe` → `run_nondet` rename | `[E]` | One real committee adjudication on 61997: 76 s, `REJECT`, confidence 85, reason coherent, decision inside the vocabulary |
+| genlayer-js 2.0.0-rc.1 can read stable Studio | `[X]` **refuted** | `gen_call` against 61999 → `execution failed`, for reads as well as writes, in the vendored bundle against the real registry. One vendored SDK serves one Studio generation; 61999 is marked `usable: false` with the reason |
+| 2.0.0-rc.1 restores model pinning to the browser | `[X]` refuted | The string `simConfig` occurs nowhere in the bundle; `writeContract` takes `fees` where the Python SDK takes `sim_config`. Three live 61997 runs drew `policy:dev-gpt-5-4`, `openai/gpt-5.4`, `policy:dev-gpt-oss` — the network's choices, as before |
+| The explorer shows the deployed contracts | `[E]` | `explorer-studio-dev.genlayer.com` renders all three address pages (contract label, address, creator, deploy tx, balance, full transaction history) and all three deploy transactions as `FINALIZED` / `Deploy`. 27/27 render checks |
+| The explorer shows a method schema | `[X]` refuted | Its METHOD column reads `(constructor)` for every GenVM call and there is no ABI view. Method-level verification comes from the node instead: `gen_getContractSchema` reports the expected method set for all three |
+| The published measurements were re-taken on 61997 | `[A]` **no** | 4/8, mean divergence 0.3125, noise floor 0.0, the re-test table and the E6 verdict remain studionet measurements over 48 pinned-model transactions, and stay labelled that way. 61997 carries the live artifact, not a new measurement |

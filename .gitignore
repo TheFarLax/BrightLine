@@ -1,6 +1,11 @@
 # Dependencies — restorable from package.json / requirements
 node_modules/
 .venv/
+# Studio Next needs consensus v0.6 (fee-quoted tuple ABI), which only genlayer-py
+# 0.19.0rc2 speaks; that release also renames TransactionStatus out from under
+# brightline/chain.py. Kept in its own venv so the 61999 toolchain every published
+# measurement used stays exactly as it was. See docs/STUDIO_NEXT.md.
+.venv-rc/
 
 # Local dev keys and deployment bookkeeping. Never publish.
 .brightline/

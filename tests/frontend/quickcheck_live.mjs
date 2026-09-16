@@ -1,4 +1,4 @@
-/* Live verification of the quick-check run loop, on real studionet.
+/* Live verification of the quick-check run loop, on the live verification network.
  *
  * Runs the same sequence the browser component runs -- registration precondition, N
  * sequential adjudications, decision extraction, run-to-run divergence -- through the
@@ -12,7 +12,7 @@
  *   node tests/frontend/quickcheck_live.mjs
  */
 import { createClient, createAccount } from "genlayer-js";
-import { studionet } from "genlayer-js/chains";
+import * as chains from "genlayer-js/chains";
 import { readFileSync } from "node:fs";
 import { divergence, extractReturn, statusKind, statusName, executionFailed }
   from "../../frontend/lib/receipt.js";
@@ -20,21 +20,69 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const R = (p) => JSON.parse(readFileSync(join(root, p), "utf8"));
-const cfg = R("frontend/networks.json").networks.studionet;
+const all = R("frontend/networks.json");
+// Follows the config's verification network rather than pinning one.
+const cfg = all.networks[all.default];
 const probeAddr = cfg.contracts.probe.address;
 const rule = R("reports/index.json").reports[0].rule_hash;
 const set = R("probes/ps_6ce467da9d20c1f2.json");
 const probe = set.probes[1];                        // conflicting_evidence
 const k = R(".brightline/accounts.json").default;
-const client = createClient({ chain: studionet, account: createAccount(k.startsWith("0x")?k:`0x${k}`) });
+// Same RPC override lib/gl.js applies -- see the note there.
+const base = chains[cfg.js_chain];
+if (base.id !== cfg.chain_id) throw new Error(`chain ${base.id} != config ${cfg.chain_id}`);
+const chain = { ...base, rpcUrls: { default: { http: [cfg.rpc] } } };
+/** Retry a call that failed for transport reasons, not contract reasons.
+ *
+ * Studio Next is a shared preview network and sheds load ("Server busy: all 8 execution
+ * slots occupied"). lib/gl.js `read()` already retries browser reads with backoff for
+ * the same reason, so the suite that claims to exercise the browser's path has to do it
+ * too -- otherwise it reports someone else's congestion as a Brightline failure.
+ * Contract-level refusals are not retried: they arrive as receipts, not throws.
+ */
+async function resilient(label, fn, attempts = 5) {
+  let last;
+  for (let i = 0; i < attempts; i++) {
+    try { return await fn(); } catch (e) {
+      last = e;
+      const msg = String(e?.message || e);
+      if (!/busy|fetch failed|timeout|ECONN|socket|slots occupied/i.test(msg)) throw e;
+      const wait = 2000 * (i + 1);
+      console.log(`  ..   ${label}: ${msg.split("\n")[0].slice(0, 80)} -- retry in ${wait}ms`);
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw last;
+}
+
+/** Same fee quoting the browser does in lib/gl.js `write()`.
+ *
+ * Consensus v0.6 rejects a zero fee deposit (`FeeValueMustBeNonZero`) at the EVM layer,
+ * and writeContract only prices a transaction when handed a distribution. Quoting here
+ * keeps this suite exercising the same path the dApp takes rather than a cheaper one.
+ */
+async function sendWrite(client, params) {
+  return resilient(`write ${params.functionName}`, async () => {
+    const fees = typeof client.estimateTransactionFees === "function"
+      ? await client.estimateTransactionFees() : undefined;
+    return client.writeContract({ ...params, ...(fees ? { fees } : {}) });
+  });
+}
+
+/** client.readContract, retried on the same transport conditions. */
+function resilientRead(client, params) {
+  return resilient(`read ${params.functionName}`, () => client.readContract(params));
+}
+
+const client = createClient({ chain, account: createAccount(k.startsWith("0x")?k:`0x${k}`) });
 
 let pass=0, fail=0;
 const check=(n,ok,d="")=>{console.log(`  ${ok?"PASS":"FAIL"}  ${n}${ok||!d?"":`\n        ${d}`}`);ok?pass++:fail++;};
 
 // Registration precondition, exactly as the component checks it.
 const [r, sc] = await Promise.all([
-  client.readContract({ address: probeAddr, functionName: "get_rule", args: [rule] }),
-  client.readContract({ address: probeAddr, functionName: "get_probe", args: [probe.probe_id] }),
+  resilientRead(client, { address: probeAddr, functionName: "get_rule", args: [rule] }),
+  resilientRead(client, { address: probeAddr, functionName: "get_probe", args: [probe.probe_id] }),
 ]);
 check("rule and probe are registered on chain", Boolean(r) && Boolean(sc));
 
@@ -47,7 +95,7 @@ async function submit() {
   let last;
   for (let a = 0; a < 3; a++) {
     try {
-      return String(await client.writeContract({ address: probeAddr,
+      return String(await sendWrite(client, { address: probeAddr,
         functionName: "adjudicate", args: [rule, probe.probe_id], value: 0n }));
     } catch (e) {
       last = e;

@@ -22,9 +22,11 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from brightline.chain import Chain
+if TYPE_CHECKING:                      # annotations only -- see the note in main()
+    from brightline.chain import Chain
+
 from brightline.state import latest, save_deployment
 from brightline.spec import sha
 
@@ -116,6 +118,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.dry_run:
         print("\ndry run; nothing published")
         return 0
+
+    # Imported here rather than at module scope so `report_to_attestation` -- a pure
+    # mapping with no chain access -- can be reused from the Studio Next scripts, which
+    # run under .venv-rc where genlayer-py 0.19.0rc2 has no TransactionStatus for
+    # brightline.chain to import.
+    from brightline.chain import Chain
 
     ch = Chain(network)
     if ch.meta["faucet"] == "sim" and ch.balance() == 0:

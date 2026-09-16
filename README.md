@@ -10,9 +10,10 @@ independent models do not reach the same decision.
 The output that matters is not a score. It is a sentence: *here is the case where you
 don't get paid.*
 
-**Try it:** `.venv/bin/python scripts/serve.py` → <http://127.0.0.1:8800/frontend/>.
-The reports, the rule hasher and every chain read work with no wallet at all.
-Six-minute walkthrough: [docs/DEMO.md](docs/DEMO.md).
+**Try it:** <https://thefarlax.github.io/BrightLine/> — live on GenLayer **Studio Next**
+(chain 61997). Or locally: `.venv/bin/python scripts/serve.py` →
+<http://127.0.0.1:8800/frontend/>. The reports, the rule hasher and every chain read work
+with no wallet at all. Six-minute walkthrough: [docs/DEMO.md](docs/DEMO.md).
 
 ## The first real result
 
@@ -111,7 +112,10 @@ prompts/adversary_v1.md         published adversary instructions (hash in every 
 agreements/                     rules under test, v1 and v2
 probes/ps_*.json                frozen, content-addressed probe manifests
 brightline/                     spec · adversary · chain · panel · report · diff · run
+brightline/genvm03.py           derives the GenVM 0.3 build of each contract, unit-tested
 scripts/e*.py                   the approval gates, each writing raw evidence
+scripts/deploy_studio_next.py   deploy + seed on chain 61997 (runs under .venv-rc)
+scripts/verify_studio_next.py   20 live checks on 61997, real transactions
 experiments/                    raw gate output, kept
 reports/                        generated reports + every raw receipt
 frontend/                       the dApp (no build step; genlayer-js vendored)
@@ -126,17 +130,44 @@ docs/LIMITATIONS.md             what this does not measure
 docs/RESULTS.md                 the numbers, with provenance
 docs/DEPLOY.md                  building and hosting the dApp
 docs/DEMO.md                    the six-minute walkthrough
+docs/STUDIO_NEXT.md             chain 61997: addresses, the four incompatibilities, limits
 ```
 
 ## Deployments
 
-Every number in this repo was produced by these contracts. Addresses are also carried
-inside each report's provenance block, and the frontend reads them from
-[`frontend/networks.json`](frontend/networks.json) rather than from anything hardcoded.
+Addresses are carried inside each report's provenance block, and the frontend reads them
+from [`frontend/networks.json`](frontend/networks.json) rather than from anything
+hardcoded.
 
-**studionet** — the network all measurements ran on, and the one the dApp uses by
-default. `sim_config` model pinning is Studio-only, which is what makes the panel
-channel possible at all.
+Two networks, two different jobs, and the difference matters: **the dApp runs on Studio
+Next; the published measurements were taken on stable Studio.** Neither claim borrows
+from the other.
+
+**studio-next** — chain **61997**, the dApp's verification network and its default.
+GenVM v0.3.0-rc7, consensus v0.6. Deployed fresh here: 61997 is a separate chain and the
+61999 addresses do not exist on it.
+
+| Contract | Address | Deploy tx |
+|---|---|---|
+| `BrightlineProbe` — adjudication | [`0x025AF20b0eCD703Ab079568c24861308F09bD77d`](https://explorer-studio-dev.genlayer.com/address/0x025AF20b0eCD703Ab079568c24861308F09bD77d) | [`0x29fceaa9…27207293`](https://explorer-studio-dev.genlayer.com/tx/0x29fceaa9d1103c2c1225c8c33e428d2d6ad6eb1bc2113a1806c57b1927207293) |
+| `BrightlineRegistry` — published reports | [`0xBFE7D9f45241B7baD76f79A265e03703314100E1`](https://explorer-studio-dev.genlayer.com/address/0xBFE7D9f45241B7baD76f79A265e03703314100E1) | [`0xf305bbd4…f0fe8978`](https://explorer-studio-dev.genlayer.com/tx/0xf305bbd4b71987d12e5582e01079165ae62a3c4d0d309e75a8f3356cf0fe8978) |
+| `GatedEscrow` — the money gate | [`0x8467f1027A9657A90a26e9127aD24772837fC612`](https://explorer-studio-dev.genlayer.com/address/0x8467f1027A9657A90a26e9127aD24772837fC612) | [`0x0f0c3838…6a40dcf1`](https://explorer-studio-dev.genlayer.com/tx/0x0f0c38387657a422be54d81a8227d9a610a909efa46df07a526f3df76a40dcf1) |
+
+Verified with real transactions, 20/20 —
+`.venv-rc/bin/python scripts/verify_studio_next.py` — including the on-chain refusal
+*"rule has 4 counterexamples, deal tolerates 3"*, a successful lock at tolerance 4 with
+`counterexamples_at_lock = 4`, and one live committee adjudication. Getting there meant
+fixing four real incompatibilities (v0.6 tuple ABI, mandatory fee quotes, a moved GenVM
+runner, and five renamed contract-SDK names), all written up in
+[docs/STUDIO_NEXT.md](docs/STUDIO_NEXT.md) — including the cost: the genlayer-js
+2.0.0-rc.1 bundle Studio Next requires **cannot read 61999**, so the dApp serves one
+Studio generation and the config says which.
+
+**studionet** — chain 61999, stable Studio: the network **all measurements ran on**.
+`sim_config` model pinning is Studio-only, which is what makes the panel channel
+possible at all. Its contracts are live and unchanged and the CLI still uses them; the
+browser bundle cannot query them, so the dApp marks it read-only-elsewhere and points at
+the reports, which need no chain.
 
 | Contract | Address | Deploy tx |
 |---|---|---|
@@ -144,8 +175,10 @@ channel possible at all.
 | `BrightlineRegistry` — published reports | [`0x8a3476D6c84cea489d4Eb9A0be744fe403560196`](https://explorer-studio.genlayer.com/address/0x8a3476D6c84cea489d4Eb9A0be744fe403560196) | `0x590ffb3035a72ece029c9de98150546078b1c86c27ca02073a6db68c391ebbdb` |
 | `GatedEscrow` — the money gate | [`0x3826C2374fBDBcb8a248e0523eF1f325b3F5A590`](https://explorer-studio.genlayer.com/address/0x3826C2374fBDBcb8a248e0523eF1f325b3F5A590) | `0xb6662bbcf603f3f67e61b8a04b5d7122a1ec59d9e83c43021fadeffc9e0cf13f` |
 
-`GatedEscrow` is constructed against that registry address, so the gate cannot be
-pointed at a friendlier one after the fact.
+On both networks `GatedEscrow` is constructed against *that network's* registry, so the
+gate cannot be pointed at a friendlier one after the fact — and the Studio Next gate is
+not pointed at the 61999 registry. That is read back off chain after deployment rather
+than trusted.
 
 **testnet-bradbury** — network truth only. `BrightlineProbe` is deployed at
 `0xebd5A75F832985C3e3ddeFe2f60c7B7eA97C3880` (deploy tx
@@ -168,6 +201,11 @@ Redeploying regenerates `frontend/networks.json`:
 ```bash
 /usr/bin/python3.12 -m venv .venv && .venv/bin/pip install "genlayer-test[sim]" genlayer-py requests genvm-linter
 .venv/bin/genvm-lint check contracts/brightline_probe.py
+
+# Studio Next (chain 61997) only. Consensus v0.6 needs the release-candidate SDK, which
+# renames TransactionStatus out from under brightline/chain.py -- hence a second venv
+# rather than an upgrade. See docs/STUDIO_NEXT.md.
+/usr/bin/python3.12 -m venv .venv-rc && .venv-rc/bin/pip install "genlayer-py==0.19.0rc2"
 
 .venv/bin/python scripts/e1_smoke.py studionet          # contract works
 .venv/bin/python scripts/e2_gate.py studionet           # panel channel works
@@ -210,8 +248,9 @@ genlayer-js is vendored into `frontend/vendor/` (`node scripts/vendor_sdk.mjs`) 
 dApp has no runtime CDN dependency; a dropped CDN sub-request used to kill the wallet
 path outright.
 
-Wallet writes are studionet-only for now. Bradbury is CLI-only until genlayer-js is
-verified there; the UI states that rather than failing silently.
+Wallet writes are Studio Next only. Bradbury is CLI-only until genlayer-js is verified
+there, and stable Studio is unreachable from the vendored 2.0.0-rc.1 bundle at all; the
+UI states each reason rather than failing silently.
 
 ### Deploying it
 
@@ -230,9 +269,10 @@ Details, host requirements and the excluded-files rationale in
 
 | | |
 |---|---|
-| `.venv/bin/python -m pytest tests/unit tests/direct -q` | 66 pass, 3 skip by design |
-| `npm run test:all` | 137 JS checks, incl. 68 in a real Chromium against live studionet and a 10-check smoke test of the deployable bundle |
-| `npm run test:live` | 34 live studionet checks through the JS stack, real transactions |
+| `.venv/bin/python -m pytest tests/unit tests/direct -q` | 88 pass, 3 skip by design |
+| `npm run test:all` | 162 JS checks, incl. 72 in a real Chromium against live Studio Next and a 10-check smoke test of the deployable bundle |
+| `npm run test:live` | 34 live Studio Next checks through the JS stack, real transactions |
+| `.venv-rc/bin/python scripts/verify_studio_next.py` | 20 live checks on chain 61997, real transactions |
 
 The browser suite covers read-only mode, the wallet RPC sequence against a mock
 EIP-1193 provider, both escrow refusal paths, rule hashing, the WAI-ARIA tab model, and

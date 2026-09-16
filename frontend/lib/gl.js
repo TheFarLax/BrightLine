@@ -11,13 +11,18 @@
  * build step to *run*; `node scripts/vendor_sdk.mjs` is a one-off step to *update* the
  * SDK, and its output is committed.
  *
- * Wallet writes go through MetaMask plus the `npm:genlayer-wallet-plugin` Snap --
- * `client.connect()` requests the Snap and issues wallet_addEthereumChain /
- * wallet_switchEthereumChain itself. That external dependency is the reason
- * `walletAvailable()` and the read-only path exist.
+ * Wallet writes go through MetaMask plus the `npm:genlayer-wallet-plugin` Snap.
+ * `client.connect()` requests the Snap; the chain add/switch is done here instead, for
+ * the reasons in `walletClient`. That external dependency is why `walletAvailable()`
+ * and the read-only path exist.
+ *
+ * Vendored at 2.0.0-rc.1 because Studio Next (chain 61997) is consensus v0.6: the
+ * consensus contract takes one packed tuple and refuses any transaction without a
+ * quoted fee distribution, which 1.x does not send. `writeContract` resolves that quote
+ * itself when `fees` is omitted, so nothing in the app has to price transactions.
  */
 
-const SDK_VERSION = "1.1.8";
+const SDK_VERSION = "2.0.0-rc.1";
 // One bundle for the SDK and its chains: two bundles means two copies of viem, and a
 // chain object from one is not the object the other expects.
 const SDK_URL = "../vendor/genlayer-js.js";
@@ -65,11 +70,43 @@ export function walletAvailable() {
   return typeof globalThis.ethereum !== "undefined";
 }
 
+/** Origin of the explorer, derived from the configured tx URL. */
+function explorerOrigin(net) {
+  try {
+    return net.explorer_tx ? new URL(net.explorer_tx).origin : null;
+  } catch { return null; }
+}
+
+/**
+ * The SDK's chain object, with two fields taken from networks.json instead.
+ *
+ * `rpcUrls`: chain 61997 answers on two hostnames -- genlayer-js names
+ * studio-dev.genlayer.com, the network is deployed as studio-next.genlayer.com, and both
+ * report eth_chainId 0xf22d over shared state. Pinning the configured host means the
+ * endpoint the UI displays is the endpoint it actually reads, and the browser and the
+ * CLI that deployed the contracts agree.
+ *
+ * `blockExplorers`: genlayer-js sets this to undefined for 61997. Left that way,
+ * `connect()` builds `blockExplorerUrls: [undefined]` and hands it to MetaMask, which
+ * validates that field. An explorer does index 61997, so supply it.
+ */
 async function chainFor(net) {
   const { chains } = await sdk();
-  const chain = chains[net.js_chain];
-  if (!chain) throw new Error(`genlayer-js has no chain "${net.js_chain}"`);
-  return chain;
+  const base = chains[net.js_chain];
+  if (!base) throw new Error(`genlayer-js has no chain "${net.js_chain}"`);
+  const origin = explorerOrigin(net);
+  return {
+    ...base,
+    ...(net.rpc ? { rpcUrls: { default: { http: [net.rpc] } } } : {}),
+    ...(base.blockExplorers || !origin
+      ? {}
+      : { blockExplorers: { default: { name: "GenLayer Explorer", url: origin } } }),
+  };
+}
+
+/** The chain id the SDK will actually transact against, for display and for tests. */
+export async function chainIdFor(net) {
+  return (await chainFor(net)).id;
 }
 
 /** Account-free client. Every read in the app goes through this. */
@@ -99,10 +136,38 @@ export async function walletClient(net) {
   if (!address) throw new Error("wallet returned no account");
 
   const { createClient } = await sdk();
-  const client = createClient({
-    chain: await chainFor(net), account: address, provider,
-  });
+  const chain = await chainFor(net);
+  const client = createClient({ chain, account: address, provider });
+
+  // Add and switch the chain ourselves, before connect(). Two reasons, both about
+  // `connect()` reaching for its own hardcoded chain table rather than ours: it would
+  // register the chain under the SDK's RPC host instead of the configured one, and for
+  // 61997 it passes `blockExplorerUrls: [undefined]` because its table has no explorer
+  // for that chain. Once the wallet is already on the right chain, connect() skips that
+  // branch entirely and only does the part we want it for -- requesting the Snap.
+  const chainIdHex = `0x${chain.id.toString(16)}`;
+  if (await provider.request({ method: "eth_chainId" }) !== chainIdHex) {
+    await provider.request({
+      method: "wallet_addEthereumChain",
+      params: [{
+        chainId: chainIdHex,
+        chainName: chain.name,
+        rpcUrls: chain.rpcUrls.default.http,
+        nativeCurrency: chain.nativeCurrency,
+        ...(chain.blockExplorers
+          ? { blockExplorerUrls: Object.values(chain.blockExplorers).map((e) => e.url) }
+          : {}),
+      }],
+    });
+    await provider.request({
+      method: "wallet_switchEthereumChain", params: [{ chainId: chainIdHex }],
+    });
+  }
   await client.connect(net.js_chain, "npm");
+  // connect() assigns its own table entry to client.chain, which would move writes onto
+  // the SDK's RPC host. Put the configured chain back so every call in the session goes
+  // to the endpoint the UI names.
+  client.chain = chain;
   return { client, address };
 }
 
@@ -131,9 +196,20 @@ export async function read(client, address, functionName, args = [], attempts = 
  * pending row before consensus finishes. Waiting is a separate concern.
  */
 export async function write(client, address, functionName, args = [], opts = {}) {
+  // Consensus v0.6 rejects a transaction whose fee deposit is zero
+  // (`FeeValueMustBeNonZero`), at the EVM layer, before GenVM runs. `writeContract`
+  // only prices a transaction when it is handed a fee distribution: with `fees` omitted
+  // it takes the all-zero default, decides no deposit is needed, and sends 0. So quote
+  // first. One extra read per write, and it returns a zero quote by itself on a chain
+  // whose fee policy is disabled, so this is correct on both Studio generations.
+  const fees = opts.fees
+    ?? (typeof client.estimateTransactionFees === "function"
+      ? await client.estimateTransactionFees()
+      : undefined);
   return client.writeContract({
     address, functionName, args,
     value: opts.value ?? 0n,
+    ...(fees ? { fees } : {}),
     ...(opts.consensusMaxRotations !== undefined
       ? { consensusMaxRotations: opts.consensusMaxRotations } : {}),
     ...(opts.leaderOnly ? { leaderOnly: true } : {}),

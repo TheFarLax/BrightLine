@@ -124,17 +124,31 @@ So the branch fired as written:
 
 ## What the dApp cannot do
 
-- **It cannot run the panel.** genlayer-js 1.1.8 has no `simConfig` on `writeContract`
-  and passing one is silently ignored — verified by requesting three specific models
-  and getting three others. The browser cannot pin a validator model, so cross-model
-  divergence is CLI-only. The Quick check tab measures run-to-run stability of the live
-  committee and says so on screen.
+- **It cannot run the panel.** genlayer-js has no `simConfig` on `writeContract` and
+  passing one is silently ignored — verified under 1.1.8 by requesting three specific
+  models and getting three others, and still true of the 2.0.0-rc.1 bundle now
+  vendored, where the string does not occur at all. The browser cannot pin a validator
+  model, so cross-model divergence is CLI-only. The Quick check tab measures run-to-run
+  stability of the live committee and says so on screen.
 - **Settlement records entitlement; it does not move value.** External messages are
   finalization-only and non-functional in Studio, so a payout that cannot execute here
   would be theatre.
-- **Wallet writes are studionet-only.** genlayer-py needed an explicit gas limit to
-  land a write on Bradbury and genlayer-js is unverified there, so `wallet_writes` is
-  false for it and the header states the reason instead of failing at signing time.
+- **Wallet writes are Studio Next only, and so are chain reads.** genlayer-py needed an
+  explicit gas limit to land a write on Bradbury and genlayer-js is unverified there.
+  Stable Studio is a sharper constraint: the genlayer-js 2.0.0-rc.1 bundle that chain
+  61997 requires cannot read 61999 at all (`gen_call` → `execution failed`), so one
+  vendored SDK serves one Studio generation. 61999 keeps its addresses in the config
+  marked `deployed: true, usable: false`, with the reason, and the header states it
+  rather than failing at signing time. The contracts there are live and unchanged and
+  the CLI still uses them — see [STUDIO_NEXT.md](STUDIO_NEXT.md).
+- **The dApp's network is a preview network.** Studio Next may reset, and it sheds load
+  (`Server busy: all 8 execution slots occupied`). Reads retry with backoff; a reset
+  means re-running `scripts/deploy_studio_next.py`. None of the published numbers
+  depend on it.
+- **Nothing was re-measured on 61997.** Every figure in this repo is a studionet
+  measurement taken with pinned models over 48 transactions. Studio Next carries the
+  interactive artifact — the live registry, the live gate, a live adjudication — not a
+  new measurement, and the two are labelled separately throughout.
 - **Studionet rate-limits browser reads under load**, returning a response with no
   CORS header. Reads retry with backoff and an unreadable publication check renders as
   unknown rather than as "not published" — claiming the latter would invite a duplicate

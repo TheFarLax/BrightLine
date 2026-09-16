@@ -1,4 +1,4 @@
-/* Live verification of the settlement flow through the JS stack, on real studionet.
+/* Live verification of the settlement flow through the JS stack, on real chain.
  *
  * This exercises exactly what the browser exercises -- genlayer-js writeContract, the
  * attestation projection, ABI arg order, and the revert-detection helpers in
@@ -15,7 +15,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 import { createClient, createAccount } from "genlayer-js";
-import { studionet } from "genlayer-js/chains";
+import * as chains from "genlayer-js/chains";
 
 import { publishArgs, reportToAttestation, lockPreview } from "../../frontend/lib/attest.js";
 import { executionFailed, revertMessage, statusKind, statusName } from "../../frontend/lib/receipt.js";
@@ -32,6 +32,48 @@ const check = (name, ok, detail = "") => {
   ok ? pass++ : fail++;
 };
 
+/** Retry a call that failed for transport reasons, not contract reasons.
+ *
+ * Studio Next is a shared preview network and sheds load ("Server busy: all 8 execution
+ * slots occupied"). lib/gl.js `read()` already retries browser reads with backoff for
+ * the same reason, so the suite that claims to exercise the browser's path has to do it
+ * too -- otherwise it reports someone else's congestion as a Brightline failure.
+ * Contract-level refusals are not retried: they arrive as receipts, not throws.
+ */
+async function resilient(label, fn, attempts = 5) {
+  let last;
+  for (let i = 0; i < attempts; i++) {
+    try { return await fn(); } catch (e) {
+      last = e;
+      const msg = String(e?.message || e);
+      if (!/busy|fetch failed|timeout|ECONN|socket|slots occupied/i.test(msg)) throw e;
+      const wait = 2000 * (i + 1);
+      console.log(`  ..   ${label}: ${msg.split("\n")[0].slice(0, 80)} -- retry in ${wait}ms`);
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw last;
+}
+
+/** Same fee quoting the browser does in lib/gl.js `write()`.
+ *
+ * Consensus v0.6 rejects a zero fee deposit (`FeeValueMustBeNonZero`) at the EVM layer,
+ * and writeContract only prices a transaction when handed a distribution. Quoting here
+ * keeps this suite exercising the same path the dApp takes rather than a cheaper one.
+ */
+async function sendWrite(client, params) {
+  return resilient(`write ${params.functionName}`, async () => {
+    const fees = typeof client.estimateTransactionFees === "function"
+      ? await client.estimateTransactionFees() : undefined;
+    return client.writeContract({ ...params, ...(fees ? { fees } : {}) });
+  });
+}
+
+/** client.readContract, retried on the same transport conditions. */
+function resilientRead(client, params) {
+  return resilient(`read ${params.functionName}`, () => client.readContract(params));
+}
+
 async function settle(client, hash, { max = 120 } = {}) {
   for (let i = 0; i < max; i++) {
     let t;
@@ -43,12 +85,21 @@ async function settle(client, hash, { max = 120 } = {}) {
 }
 
 async function main() {
-  const cfg = read("frontend/networks.json").networks.studionet;
+  const all = read("frontend/networks.json");
+  // Whatever the config says is the verification network -- so this suite follows
+  // the deployment instead of pinning a chain that may no longer be the default.
+  const cfg = all.networks[all.default];
   const registry = cfg.contracts.registry.address;
   const escrow = cfg.contracts.escrow.address;
   const key = read(".brightline/accounts.json").default;
   const account = createAccount(key.startsWith("0x") ? key : `0x${key}`);
-  const client = createClient({ chain: studionet, account });
+  // Same override lib/gl.js applies: chain 61997 answers on two hostnames and
+  // genlayer-js names the other one. Pinning the configured RPC keeps this suite on the
+  // endpoint the dApp and the deploy script use.
+  const base = chains[cfg.js_chain];
+  if (base.id !== cfg.chain_id) throw new Error(`chain ${base.id} != config ${cfg.chain_id}`);
+  const chain = { ...base, rpcUrls: { default: { http: [cfg.rpc] } } };
+  const client = createClient({ chain, account });
 
   console.log(`registry ${registry}\nescrow   ${escrow}\naccount  ${account.address}\n`);
 
@@ -57,11 +108,11 @@ async function main() {
   const rule = entry.rule_hash;
 
   // ---------------------------------------------------------------- registry reads
-  const tested = await client.readContract(
+  const tested = await resilientRead(client, 
     { address: registry, functionName: "is_tested", args: [rule] });
-  const worst = Number(await client.readContract(
+  const worst = Number(await resilientRead(client, 
     { address: registry, functionName: "worst_counterexamples", args: [rule] }));
-  const summary = JSON.parse(await client.readContract(
+  const summary = JSON.parse(await resilientRead(client, 
     { address: registry, functionName: "summary_for_rule", args: [rule] }));
 
   check("registry: is_tested true for the published rule", tested === true);
@@ -79,7 +130,7 @@ async function main() {
   check("attestation: publishArgs has 11 positional args", publishArgs(att).length === 11);
 
   // A duplicate publish must be refused by the contract, not silently accepted.
-  const dupHash = await client.writeContract({
+  const dupHash = await sendWrite(client, {
     address: registry, functionName: "publish", args: publishArgs(att), value: 0n });
   const dupTx = await settle(client, String(dupHash));
   check("registry: duplicate report_hash is refused", executionFailed(dupTx),
@@ -94,14 +145,14 @@ async function main() {
     const id = `js-ok-${stamp}`;
     check("preview: tolerance == worst is expected to lock",
       lockPreview({ tested, worst, tolerance: worst }).allowed === true);
-    await settle(client, String(await client.writeContract({
+    await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "open_deal",
       args: [id, account.address, rule, worst], value: 0n })));
-    const lockTx = await settle(client, String(await client.writeContract({
+    const lockTx = await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "lock", args: [id], value: AMOUNT })));
     check("escrow: lock succeeds within tolerance", !executionFailed(lockTx),
       revertMessage(lockTx));
-    const deal = JSON.parse(await client.readContract(
+    const deal = JSON.parse(await resilientRead(client, 
       { address: escrow, functionName: "get_deal", args: [id] }));
     check("escrow: deal state is LOCKED", deal.state === "LOCKED", deal.state);
     check("escrow: counterexamples frozen into the deal",
@@ -110,11 +161,11 @@ async function main() {
     check("escrow: registry summary frozen into the deal",
       (JSON.parse(deal.summary_at_lock || "{}").reports || 0) >= 1);
 
-    const relTx = await settle(client, String(await client.writeContract({
+    const relTx = await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "release", args: [id], value: 0n })));
     check("escrow: release records settlement", !executionFailed(relTx),
       revertMessage(relTx));
-    const after = JSON.parse(await client.readContract(
+    const after = JSON.parse(await resilientRead(client, 
       { address: escrow, functionName: "get_deal", args: [id] }));
     check("escrow: deal state is RELEASED", after.state === "RELEASED", after.state);
   }
@@ -125,17 +176,17 @@ async function main() {
     const tol = Math.max(0, worst - 1);
     check("preview: tolerance below worst predicts refusal",
       lockPreview({ tested, worst, tolerance: tol }).allowed === false);
-    await settle(client, String(await client.writeContract({
+    await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "open_deal",
       args: [id, account.address, rule, tol], value: 0n })));
-    const lockTx = await settle(client, String(await client.writeContract({
+    const lockTx = await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "lock", args: [id], value: AMOUNT })));
     check("escrow: lock refused below tolerance", executionFailed(lockTx),
       `status ${statusName(lockTx)}`);
     const msg = revertMessage(lockTx);
     check("escrow: refusal names both numbers",
       msg.includes(String(worst)) && msg.includes(String(tol)), msg);
-    const deal = JSON.parse(await client.readContract(
+    const deal = JSON.parse(await resilientRead(client, 
       { address: escrow, functionName: "get_deal", args: [id] }));
     check("escrow: deal stays OPEN after refusal", deal.state === "OPEN", deal.state);
   }
@@ -145,17 +196,17 @@ async function main() {
     const id = `js-untested-${stamp}`;
     check("preview: untested rule predicts refusal",
       lockPreview({ tested: false, worst: 0, tolerance: 99 }).allowed === false);
-    await settle(client, String(await client.writeContract({
+    await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "open_deal",
       args: [id, account.address, UNTESTED, 99], value: 0n })));
-    const lockTx = await settle(client, String(await client.writeContract({
+    const lockTx = await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "lock", args: [id], value: AMOUNT })));
     check("escrow: lock refused for an untested rule", executionFailed(lockTx),
       `status ${statusName(lockTx)}`);
     check("escrow: refusal tells the payer to test first",
       /no published Brightline report/i.test(revertMessage(lockTx)),
       revertMessage(lockTx));
-    const deal = JSON.parse(await client.readContract(
+    const deal = JSON.parse(await resilientRead(client, 
       { address: escrow, functionName: "get_deal", args: [id] }));
     check("escrow: untested deal stays OPEN", deal.state === "OPEN", deal.state);
   }
@@ -173,10 +224,10 @@ async function main() {
     const tightId = `js-demo-tight-${stamp}`;
     const okId = `js-demo-ok-${stamp}`;
 
-    await settle(client, String(await client.writeContract({
+    await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "open_deal",
       args: [tightId, account.address, rule, tight], value: 0n })));
-    const refused = await settle(client, String(await client.writeContract({
+    const refused = await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "lock", args: [tightId], value: AMOUNT })));
     check("demo: lock at tolerance below worst is refused", executionFailed(refused),
       `status ${statusName(refused)}`);
@@ -185,21 +236,21 @@ async function main() {
         .test(revertMessage(refused)), revertMessage(refused));
 
     // The gate is not editable in place: same deal, raised expectations, same answer.
-    const stillTight = JSON.parse(await client.readContract(
+    const stillTight = JSON.parse(await resilientRead(client, 
       { address: escrow, functionName: "get_deal", args: [tightId] }));
     check("demo: the refused deal keeps its original tolerance",
       Number(stillTight.max_counterexamples) === tight && stillTight.state === "OPEN",
       `${stillTight.max_counterexamples} / ${stillTight.state}`);
 
     // Recovery is a new deal at the raised tolerance -- the flow the panel now guides.
-    await settle(client, String(await client.writeContract({
+    await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "open_deal",
       args: [okId, account.address, rule, worst], value: 0n })));
-    const okTx = await settle(client, String(await client.writeContract({
+    const okTx = await settle(client, String(await sendWrite(client, {
       address: escrow, functionName: "lock", args: [okId], value: AMOUNT })));
     check("demo: a new deal at the raised tolerance locks", !executionFailed(okTx),
       revertMessage(okTx));
-    const locked = JSON.parse(await client.readContract(
+    const locked = JSON.parse(await resilientRead(client, 
       { address: escrow, functionName: "get_deal", args: [okId] }));
     check("demo: state is LOCKED", locked.state === "LOCKED", locked.state);
     check("demo: counterexamples_at_lock equals the worst published finding",
@@ -209,7 +260,7 @@ async function main() {
       BigInt(locked.amount) === AMOUNT, `${locked.amount} vs ${AMOUNT}`);
 
     // The earlier refusal is untouched by the later success: two independent deals.
-    const after = JSON.parse(await client.readContract(
+    const after = JSON.parse(await resilientRead(client, 
       { address: escrow, functionName: "get_deal", args: [tightId] }));
     check("demo: the refused deal is still OPEN after the second one locked",
       after.state === "OPEN", after.state);

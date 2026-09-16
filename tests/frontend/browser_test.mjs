@@ -1,7 +1,7 @@
-/* Browser tests for the dApp, in a real Chromium against a real studionet deployment.
+/* Browser tests for the dApp, in a real Chromium against a real deployment.
  *
  *   A. read-only mode  -- no provider present. The page must load, import the vendored
- *      genlayer-js bundle, build a read client, and read live state off studionet. A
+ *      genlayer-js bundle, build a read client, and read live chain state. A
  *      number on screen here proves the whole read path end to end.
  *   B. wallet path     -- a mock EIP-1193 provider is injected before page load. This
  *      exercises createClient({provider}) and client.connect() and records the exact
@@ -18,7 +18,7 @@
  * been walked manually by the maintainer and works; the automated evidence for it is
  * the RPC sequence case B prints, which is what a reviewer should compare against.
  *
- * The hosted studionet endpoint intermittently drops browser reads under load. Those
+ * The hosted Studio endpoints intermittently drop browser reads under load. Those
  * are recorded and reported as transport conditions rather than failing the run -- the
  * app retries and states the failure, which is the behaviour under test.
  *
@@ -27,6 +27,7 @@
 
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 import net from "node:net";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -36,11 +37,23 @@ const EXE = "/root/.cache/ms-playwright/chromium-1148/chrome-linux/chrome";
 const PORT = 8811;
 const URL = `http://127.0.0.1:${PORT}/frontend/`;
 const ADDRESS = "0xCA71D5D065833919207316a62A61b599639500f0";
+// The deployment config the page will be served. Read here so the assertions follow the
+// deployment instead of restating it -- which network is default and which are usable
+// are facts that moved once already.
+const NETWORKS = JSON.parse(readFileSync(join(root, "frontend/networks.json"), "utf8"));
+const TARGET = NETWORKS.networks[NETWORKS.default];
+const TARGET_CHAIN_HEX = `0x${Number(TARGET.chain_id).toString(16)}`;
 
 /* Third-party transport conditions, not defects in this code. The SDK reports a dropped
  * read as "GenLayer RPC error (<method>): Failed to fetch" with no URL in the text, so
  * matching the host alone would misfile it as an app bug. */
-const RPC_NOISE = /studio\.genlayer\.com|rpc-bradbury|rpc-asimov|GenLayer RPC error/;
+// `studio-next` and `studio-dev` are the two hostnames of chain 61997, a preview
+// network that drops browser requests more often than stable Studio does. The app
+// retries reads with backoff for exactly this reason, so a dropped request is a
+// transport condition to report, not a defect in our code -- same treatment the other
+// hosted endpoints already get.
+const RPC_NOISE =
+  /studio\.genlayer\.com|studio-next\.genlayer\.com|studio-dev\.genlayer\.com|rpc-bradbury|rpc-asimov|GenLayer RPC error/;
 
 let pass = 0, fail = 0;
 const check = (name, ok, detail = "") => {
@@ -49,8 +62,13 @@ const check = (name, ok, detail = "") => {
 };
 
 /** Mock EIP-1193 provider. Records every method the SDK asks for. */
-const MOCK_PROVIDER = (address) => `
+const MOCK_PROVIDER = (address, targetChainHex) => `
 window.__rpc = [];
+window.__addedChains = [];
+// Starts on some other chain, so the add/switch path the app performs before
+// connect() is actually exercised rather than short-circuited. A mock that already
+// reports the target chain would let a broken switch pass.
+window.__chainId = "0x1";
 window.ethereum = {
   isMetaMask: true,
   request: async ({ method, params }) => {
@@ -58,12 +76,16 @@ window.ethereum = {
     switch (method) {
       case "eth_requestAccounts":
       case "eth_accounts":            return ["${address}"];
-      case "eth_chainId":             return "0xf22f";
-      case "net_version":             return "61999";
+      case "eth_chainId":             return window.__chainId;
+      case "net_version":             return String(parseInt(window.__chainId, 16));
       case "wallet_getSnaps":         return {};
       case "wallet_requestSnaps":     return { "npm:genlayer-wallet-plugin": { version: "0.0.0" } };
       case "wallet_addEthereumChain":
-      case "wallet_switchEthereumChain": return null;
+        window.__addedChains.push(params[0]);
+        return null;
+      case "wallet_switchEthereumChain":
+        window.__chainId = params[0].chainId;
+        return null;
       case "wallet_invokeSnap":       return { address: "${address}" };
       default:
         window.__rpc.push("UNMOCKED:" + method);
@@ -125,8 +147,19 @@ async function main() {
       await page.waitForSelector("#wallet select#w-net", { timeout: 60000 });
 
       const nets = await page.$$eval("#w-net option", (o) => o.map((x) => x.value));
-      check("read-only: network selector lists usable networks",
-        nets.includes("studionet"), `saw ${JSON.stringify(nets)}`);
+      // Asserted against the config rather than a hardcoded name: which networks are
+      // offered is a deployment fact that moved once already (61999 -> 61997), and the
+      // invariant worth testing is that the selector shows exactly the usable ones.
+      const usable = Object.entries(NETWORKS.networks)
+        .filter(([, n]) => n.usable).map(([k]) => k);
+      check("read-only: network selector lists exactly the usable networks",
+        usable.length > 0 && nets.length === usable.length
+        && usable.every((k) => nets.includes(k)),
+        `saw ${JSON.stringify(nets)}, config says ${JSON.stringify(usable)}`);
+      check("read-only: the verification network is the default selection",
+        nets.includes(NETWORKS.default)
+        && await page.inputValue("#w-net") === NETWORKS.default,
+        `${await page.inputValue("#w-net")} != ${NETWORKS.default}`);
 
       const pill = await page.textContent("#wallet .pill").catch(() => "");
       check("read-only: shows a read-only badge, not an error",
@@ -136,13 +169,13 @@ async function main() {
         (await page.$("#w-connect")) === null);
 
       // The live read. Proves CDN import + createClient + readContract against the
-      // real studionet deployment.
+      // real on-chain deployment.
       await page.waitForFunction(
         () => /rulings on chain:\s*\d+/.test(document.querySelector("#wallet").innerText),
         null, { timeout: 40000 }).catch(() => {});
       const header = await page.innerText("#wallet");
       const m = header.match(/rulings on chain:\s*(\d+)/);
-      check("read-only: live ruling_count read from studionet",
+      check("read-only: live ruling_count read from the verification network",
         !!m && Number(m[1]) > 0, `header was: ${header.replace(/\n/g, " | ")}`);
 
       const addrs = await page.$$eval("#wallet .bar.sub a", (a) => a.map((x) => x.textContent));
@@ -168,7 +201,7 @@ async function main() {
     // -------------------------------------------- B. wallet path, mock provider
     {
       const { ctx, page, errors, rpcIssues } = await withPage(browser,
-        { provider: MOCK_PROVIDER(ADDRESS), timeoutMs: 60000 });
+        { provider: MOCK_PROVIDER(ADDRESS, TARGET_CHAIN_HEX), timeoutMs: 60000 });
       await page.waitForSelector("#wallet select#w-net", { timeout: 60000 });
 
       const hasConnect = (await page.$("#w-connect")) !== null;
@@ -202,6 +235,25 @@ async function main() {
         check("wallet: no unmocked RPC methods",
           !uniq.some((m) => m.startsWith("UNMOCKED:")),
           uniq.filter((m) => m.startsWith("UNMOCKED:")).join(", "));
+
+        // The wallet must end up on the verification network, and the chain it was
+        // handed must be well formed. genlayer-js leaves `blockExplorers` undefined for
+        // 61997, and its own connect() would pass `blockExplorerUrls: [undefined]` to
+        // MetaMask, which validates that field -- hence lib/gl.js adding the chain
+        // itself. This is the assertion that keeps that fix honest.
+        const added = await page.evaluate(() => window.__addedChains || []);
+        const landed = await page.evaluate(() => window.__chainId);
+        check(`wallet: switched to the verification chain ${TARGET_CHAIN_HEX}`,
+          landed === TARGET_CHAIN_HEX, `wallet reports ${landed}`);
+        const spec = added.find((c) => c.chainId === TARGET_CHAIN_HEX);
+        check("wallet: chain was added with the configured RPC",
+          Boolean(spec) && (spec.rpcUrls || []).includes(TARGET.rpc),
+          JSON.stringify(spec));
+        check("wallet: no undefined entries in the chain parameters",
+          Boolean(spec)
+          && (spec.blockExplorerUrls || []).every((u) => typeof u === "string" && u)
+          && typeof spec.chainName === "string" && Boolean(spec.nativeCurrency),
+          JSON.stringify(spec));
       }
 
       check("wallet: no uncaught page errors", errors.length === 0,
@@ -296,7 +348,7 @@ async function main() {
     // ------------------------------- D. settlement with a wallet: writes unlocked
     {
       const { ctx, page, errors, rpcIssues } = await withPage(browser,
-        { provider: MOCK_PROVIDER(ADDRESS), timeoutMs: 60000 });
+        { provider: MOCK_PROVIDER(ADDRESS, TARGET_CHAIN_HEX), timeoutMs: 60000 });
       await page.waitForSelector("#w-connect", { timeout: 60000 });
       await page.click("#w-connect");
       await page.waitForSelector("#wallet .pill.ok", { timeout: 60000 });

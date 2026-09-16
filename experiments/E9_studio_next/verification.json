@@ -1,0 +1,156 @@
+{
+  "network": "studio-next",
+  "chain_id": 61997,
+  "rpc": "https://studio-next.genlayer.com/api",
+  "checks": [
+    {
+      "name": "register_rule executed",
+      "ok": true,
+      "detail": "return {'readable': 'null'}"
+    },
+    {
+      "name": "the rule reads back byte-identical",
+      "ok": true,
+      "detail": "'Pay the contributor if the contributor delivers a working fix.' != 'Pay the contributor if the contributor delivers a working fix.'"
+    },
+    {
+      "name": "register_probe executed",
+      "ok": true,
+      "detail": "return {'readable': 'null'}"
+    },
+    {
+      "name": "the probe scenario reads back byte-identical",
+      "ok": true,
+      "detail": "'{\"evidence_absent\":[],\"evidence_available\":[\"diff\",\"issue_history\",\"reproduction'"
+    },
+    {
+      "name": "publish executed (already on chain from an earlier run)",
+      "ok": true,
+      "detail": "rollback [EXPECTED] report_hash already published"
+    },
+    {
+      "name": "registry reports the rule as tested",
+      "ok": true,
+      "detail": "True"
+    },
+    {
+      "name": "worst_counterexamples == 4",
+      "ok": true,
+      "detail": "chain says 4"
+    },
+    {
+      "name": "lock was refused on chain",
+      "ok": true,
+      "detail": "status=rollback"
+    },
+    {
+      "name": "refusal names both numbers: 'rule has 4 counterexamples, deal tolerates 3'",
+      "ok": true,
+      "detail": "[EXPECTED] rule has 4 counterexamples, deal tolerates 3; tighten the rule or raise the tolerance deliberately"
+    },
+    {
+      "name": "the refused deal is still OPEN",
+      "ok": true,
+      "detail": "OPEN"
+    },
+    {
+      "name": "its tolerance is still 3",
+      "ok": true,
+      "detail": "{'amount': 0, 'counterexamples_at_lock': 0, 'deal_id': 'e9-tight-1789558904', 'max_counterexamples': 3, 'payee': '0xCA71D5D065833919207316a62A61b599639500f0', 'payer': '0xCA71D5D065833919207316a62A61b599639500f0', 'rule_hash': '0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2', 'state': 'OPEN', 'summary_at_lock': '', 'ts_locked': '', 'ts_opened': '2026-09-16T11:41:52.639909Z'}"
+    },
+    {
+      "name": "lock executed",
+      "ok": true,
+      "detail": "return {'readable': '\"{\\\\\"amount\\\\\": 10000000000000000, \\\\\"counterexamples_at_lock\\\\\": 4, \\\\\"deal_id\\\\\": \\\\\"e9-ok-1789558941\\\\\", \\\\\"state\\\\\": \\\\\"LOCKED\\\\\", \\\\\"tolerated\\\\\": 4}\"'}"
+    },
+    {
+      "name": "deal state is LOCKED",
+      "ok": true,
+      "detail": "LOCKED"
+    },
+    {
+      "name": "counterexamples_at_lock == 4",
+      "ok": true,
+      "detail": "{'amount': 10000000000000000, 'counterexamples_at_lock': 4, 'deal_id': 'e9-ok-1789558941', 'max_counterexamples': 4, 'payee': '0xCA71D5D065833919207316a62A61b599639500f0', 'payer': '0xCA71D5D065833919207316a62A61b599639500f0', 'rule_hash': '0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2', 'state': 'LOCKED', 'summary_at_lock': '{\"reports\": 1, \"rows\": [{\"adversary_version\": \"adv-v1.0.0\", \"k\": 4, \"n\": 8, \"network\": \"studionet\", \"probe_set_id\": \"ps_6ce467da9d20c1f2\", \"report_hash\": \"0x3892c0c0aa6103bd62262bab7f1e2da7907602e1184e562f44ef18d904d366f6\", \"ts\": \"2026-09-16T11:31:35.424730Z\"}], \"rule_hash\": \"0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2\", \"tested\": true}', 'ts_locked': '2026-09-16T11:43:02.793338Z', 'ts_opened': '2026-09-16T11:42:48.207432Z'}"
+    },
+    {
+      "name": "the locked amount is 0.01 GEN",
+      "ok": true,
+      "detail": "10000000000000000"
+    },
+    {
+      "name": "the earlier refused deal is untouched and still OPEN",
+      "ok": true,
+      "detail": "OPEN"
+    },
+    {
+      "name": "lock was refused for the untested rule",
+      "ok": true,
+      "detail": "status=rollback"
+    },
+    {
+      "name": "refusal tells the payer to publish first",
+      "ok": true,
+      "detail": "[EXPECTED] rule has no published Brightline report; run the probes and publish before locking funds"
+    },
+    {
+      "name": "adjudicate reached a terminal consensus status",
+      "ok": true,
+      "detail": "return FINISHED_WITH_RETURN {'readable': '\"{\\\\\"confidence\\\\\": 85, \\\\\"decision\\\\\": \\\\\"REJECT\\\\\", \\\\\"probe_id\\\\\": \\\\\"0xef8b49b9341a9090daa21d17ab2ebd4475e9e523de92aa14f18ec0a1680e4c6e\\\\\", \\\\"
+    },
+    {
+      "name": "the ruling stored a decision in the vocabulary",
+      "ok": true,
+      "detail": "{'confidence': 85, 'decision': 'REJECT', 'probe_id': '0xef8b49b9341a9090daa21d17ab2ebd4475e9e523de92aa14f18ec0a1680e4c6e', 'reason': \"The rule requires 'a working fix.' The contributor's change closed the reported defect but caused a previously-closed defect to reproduce in the same module, indicating the fix introduced a regression. A fix that breaks existing functionality is not working.\", 'rule_hash': '0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2', 'status': 'OK', 'ts': '2026-09-16T11:43:46.702157Z'}"
+    }
+  ],
+  "txs": {
+    "register_rule": [
+      "0xfc662fcfffc6c81b69fd6271c1220a73360118ce57bead57eebc067ced9db423"
+    ],
+    "register_probe": [
+      "0x280c74ee7f9e4e595a8ffe0998df5a12848850fe2c8d92f6c72f67036fa150b0"
+    ],
+    "publish": [
+      "0x29cf9ef93066dce1ce68f5824f6b84f3d86c567c4bb853ada54ffe5deeefe710"
+    ],
+    "open_deal": [
+      "0x6a3860b5481d8abc946dcea7b87a75379a1e92a42e209271ce2403a3d707a238",
+      "0x5d9d28881173e207316204c112774ca673e45991e876422b557bc48f8c8421ac",
+      "0x02cc361e37569ec193c18028317134382dfa9ad8dd2ddebc7e46e2b134742ed5"
+    ],
+    "lock": [
+      "0xef505bc921c6059dcf908ef3ed40b28afa9c5c3ce1ad683ee4cc194168b8aba9",
+      "0x736a7a24d631548031236433110be26ab42d653c9396391c8189dbfe40c3bf6c",
+      "0x0f4a543afbd1192a28807129fd514f772d0dfd00387b2540cec4676ed3b4bbeb"
+    ],
+    "adjudicate": [
+      "0x128987c9c49eb73c84a9055ac2367fc5b806796d46ccb4f3b4afc1aee7f53e7b"
+    ]
+  },
+  "addresses": {
+    "probe": "0x025AF20b0eCD703Ab079568c24861308F09bD77d",
+    "registry": "0xBFE7D9f45241B7baD76f79A265e03703314100E1",
+    "escrow": "0x8467f1027A9657A90a26e9127aD24772837fC612"
+  },
+  "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+  "worst": 4,
+  "ruling": {
+    "confidence": 85,
+    "decision": "REJECT",
+    "probe_id": "0xef8b49b9341a9090daa21d17ab2ebd4475e9e523de92aa14f18ec0a1680e4c6e",
+    "reason": "The rule requires 'a working fix.' The contributor's change closed the reported defect but caused a previously-closed defect to reproduce in the same module, indicating the fix introduced a regression. A fix that breaks existing functionality is not working.",
+    "rule_hash": "0x70346ad83b062d8fe939b908b9c6321186513aabb25919ef038958305dd0b8e2",
+    "status": "OK",
+    "ts": "2026-09-16T11:43:46.702157Z"
+  },
+  "adjudicate_seconds": 76.0,
+  "passed": 20,
+  "failed": 0,
+  "explorer": {
+    "probe": "https://explorer-studio-dev.genlayer.com/address/0x025AF20b0eCD703Ab079568c24861308F09bD77d",
+    "registry": "https://explorer-studio-dev.genlayer.com/address/0xBFE7D9f45241B7baD76f79A265e03703314100E1",
+    "escrow": "https://explorer-studio-dev.genlayer.com/address/0x8467f1027A9657A90a26e9127aD24772837fC612"
+  },
+  "finished": "2026-09-16T11:44:56Z"
+}

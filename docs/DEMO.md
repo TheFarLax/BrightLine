@@ -4,7 +4,10 @@ One claim, proved on screen: **the network that will judge your agreement can te
 today where it will disagree with itself — and refuse to release money until you fix
 it.**
 
-Everything below runs on the deployed dApp against live studionet. Nothing is mocked.
+Everything below runs on the deployed dApp against live **Studio Next** (chain 61997).
+Nothing is mocked. The *measurements* you will read off the Reports tab were taken on
+stable Studio with pinned models — that distinction is on screen and in
+[STUDIO_NEXT.md](STUDIO_NEXT.md), and it is worth stating out loud if anyone asks.
 
 ## Before you start
 
@@ -15,18 +18,22 @@ Live: <https://thefarlax.github.io/BrightLine/> — or serve the same bundle loc
 ```
 
 - MetaMask installed, `npm:genlayer-wallet-plugin` Snap already approved, account
-  funded on studionet. Approving the Snap for the first time costs 30 seconds you do
-  not have. If the account is empty, **Faucet** in the header tops it up — but do that
+  funded on Studio Next — the app adds and switches the chain for you on connect.
+  Approving the Snap for the first time costs 30 seconds you do not have. If the account is empty, **Faucet** in the header tops it up — but do that
   before the clock starts, not on camera.
-- The v1 report already published to the registry
-  (`.venv/bin/python -m brightline.publish reports/v1_ps_6ce467da9d20c1f2_studionet.json`).
+- The v1 report already published to the Studio Next registry. A fresh deployment does
+  this for you (`.venv-rc/bin/python scripts/verify_studio_next.py` publishes it and
+  leaves it there); on stable Studio the equivalent is
+  `.venv/bin/python -m brightline.publish reports/v1_ps_6ce467da9d20c1f2_studionet.json`.
   Publishing is a write like any other; it is just not the interesting one.
 - Reports tab open on **v1 · 4/8 counterexamples**, theme set, wallet connected.
 - Second window on `reports/raw/` or the explorer, in case someone asks to see a
   receipt.
 
 Timings that matter: a `lock` lands in about **10 seconds**; a live quick-check
-adjudication takes roughly **20–60 seconds** on studionet. The full panel run is
+adjudication took **76 seconds** on Studio Next in the last verified run, and it is a
+shared preview network that sometimes answers `Server busy` — narrate it, the app
+retries. The full panel run is
 **15 minutes to nearly two hours** — never demo it, cite it.
 
 ---
@@ -171,12 +178,18 @@ run does not lower the worst.
 entitled party; it does not move value. External messages are finalization-only and
 non-functional in Studio, so a payout that cannot run here would be theatre.
 
-**"Why studionet and not a public testnet?"** — Model pinning (`sim_config`) is
+**"Why Studio and not a public testnet?"** — Model pinning (`sim_config`) is
 Studio-only, and it is what makes the panel channel possible at all. The contract path
 itself is verified on Bradbury: a real transaction, and the validator vote bytes
 decoded off a live receipt. Wallet writes stay off for Bradbury in the UI until
 genlayer-js is verified there, and the header states that rather than failing at
 signing time.
+
+**"Which chain am I looking at?"** — Studio Next, 61997, and the contracts on screen
+were deployed and verified there: 20 live checks, including the refusal you just saw.
+The *numbers* on the Reports tab are stable-Studio measurements — 48 transactions with
+one model pinned per run, which Studio Next's SDK cannot do from a browser. Both facts
+are in [STUDIO_NEXT.md](STUDIO_NEXT.md); do not blur them.
 
 **"What's the biggest limitation?"** — [docs/LIMITATIONS.md](LIMITATIONS.md). The
 headline one: the score is a property of the probe set and the adversary, not of a
@@ -185,8 +198,9 @@ why every report carries one.
 
 ## If something breaks live
 
-- **A read shows `…` or an error** — studionet rate-limits browser reads under load. The
-  app retries and states the failure; press **Refresh from chain**. Do not wait in
+- **A read shows `…` or an error** — Studio Next is a shared preview network and sheds
+  load (`Server busy: all 8 execution slots occupied`). The app retries with backoff and
+  states the failure; press **Refresh from chain**. Do not wait in
   silence, narrate it: transport, not consensus.
 - **A quick-check transaction hangs** — move on and come back. `LeaderTimeout` is not
   terminal; the transaction can still finalize.

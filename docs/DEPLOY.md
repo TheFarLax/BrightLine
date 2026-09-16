@@ -58,7 +58,7 @@ npm run test:dist        # builds dist/, serves only dist/, drives it in Chromiu
 ```
 
 Ten checks: the root redirect lands on the app, a report renders from the bundled
-artifacts, the vendored SDK reads live studionet state, every tab mounts, probe
+artifacts, the vendored SDK reads live chain state, every tab mounts, probe
 manifests shipped, every image and icon **decodes** (a 200 is not a rendered image), and
 **no request 404s**. That last one is the reason this test
 exists — `serve.py` serves the whole repository, so a file that was never copied into
@@ -69,6 +69,21 @@ To eyeball it:
 ```bash
 .venv/bin/python scripts/build_static.py --serve 8899    # http://127.0.0.1:8899/
 ```
+
+## The SDK is pinned to the network
+
+`frontend/vendor/genlayer-js.js` is **2.0.0-rc.1**, and that is not a free choice.
+Studio Next (chain 61997) is consensus v0.6: its consensus contract takes one packed
+tuple and refuses any transaction without a quoted fee distribution, which 1.x cannot
+send. The same bundle cannot read stable Studio — a `gen_call` against 61999 comes back
+`execution failed`. So the vendored SDK version and the network the dApp serves are one
+decision, and `scripts/export_frontend_config.py` encodes it in `SDK_READS` so the UI
+never offers a network the bundle cannot query. Details in
+[STUDIO_NEXT.md](STUDIO_NEXT.md).
+
+Re-vendor with `node scripts/vendor_sdk.mjs` after changing the dependency, and re-run
+`npm run test:netcfg` — it asserts the config's chain id against the chain object the
+bundle actually resolves.
 
 ## Host
 
@@ -116,14 +131,17 @@ stale without anyone noticing.
 
 | | |
 |---|---|
-| Without a wallet | Reads every committed report and probe manifest, hashes a rule in-browser, and reads live registry/escrow state off studionet. This is the default state, not a degraded one. |
-| With MetaMask + the `npm:genlayer-wallet-plugin` Snap | Publishes a report, opens and locks an escrow deal, and runs a live single-probe quick check. Studionet only. |
-| Never | Runs the full 48-transaction panel. That is a CLI job: the browser cannot pin a validator model (genlayer-js 1.1.8 has no `simConfig`), so cross-model divergence cannot be measured there at all. The page says so where it matters. |
+| Without a wallet | Reads every committed report and probe manifest, hashes a rule in-browser, and reads live registry/escrow state off Studio Next (chain 61997). This is the default state, not a degraded one — the reports need no chain at all. |
+| With MetaMask + the `npm:genlayer-wallet-plugin` Snap | Publishes a report, opens and locks an escrow deal, and runs a live single-probe quick check. Studio Next only. |
+| Never | Runs the full 48-transaction panel. That is a CLI job: the browser cannot pin a validator model (genlayer-js has no `simConfig`, in 1.1.8 or 2.0.0-rc.1), so cross-model divergence cannot be measured there at all. The page says so where it matters. |
 
 Bradbury stays read-only in the UI: `wallet_writes` is `false` for it in
 `networks.json` and the wallet header states the reason rather than failing at signing
 time. genlayer-py needed an explicit gas limit to land a write there and genlayer-js is
-unverified on that network.
+unverified on that network. Stable Studio (61999) is offered for neither reads nor
+writes, for the SDK reason above; its addresses stay in `networks.json` as
+`deployed: true, usable: false` so the record of where the measurements came from
+survives in the config itself.
 
 ## Updating a deployment
 

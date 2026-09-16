@@ -10,6 +10,7 @@ the node API takes `txId` -- so receipt access is capability-probed, never assum
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 from dataclasses import dataclass, field
@@ -24,11 +25,30 @@ from genlayer_py.types.transactions import TransactionStatus
 REPO = Path(__file__).resolve().parent.parent
 KEYFILE = REPO / ".brightline" / "accounts.json"
 
+# Studio Next, chain 61997. genlayer-py 0.16.3 ships no chain object for it, so it is
+# derived here the same way the official JS SDK derives it -- genlayer-js 2.0.0-rc.1,
+# src/chains/studioDevnet.ts, is literally `{...studionet, id: 61997, rpcUrls: [...]}`:
+# same consensus contracts, same Studio RPC surface, different id and host.
+#
+# `studio-next.genlayer.com/api` and `studio-dev.genlayer.com/api` are two hostnames for
+# one chain, not two networks. Verified, not assumed: both report eth_chainId 0xf22d and
+# both return the same balance for the same address after a single faucet call. The JS
+# SDK's chain entry names the studio-dev host, so the browser reaches this same chain
+# through that alias.
+STUDIO_NEXT = dataclasses.replace(
+    g.studionet,
+    id=61997,
+    name="GenLayer Studio Next",
+    rpc_urls={"default": {"http": ["https://studio-next.genlayer.com/api"]}},
+)
+
 NETWORKS: dict[str, dict[str, Any]] = {
     "localnet": {"chain": g.localnet, "rpc": "http://127.0.0.1:4000/api",
                  "faucet": "sim", "api": "studio"},
     "studionet": {"chain": g.studionet, "rpc": "https://studio.genlayer.com/api",
                   "faucet": "sim", "api": "studio"},
+    "studio-next": {"chain": STUDIO_NEXT, "rpc": "https://studio-next.genlayer.com/api",
+                    "faucet": "sim", "api": "studio"},
     "testnet-bradbury": {
         "chain": g.testnet_bradbury,
         "rpc": "https://rpc-bradbury.genlayer.com",
@@ -279,9 +299,21 @@ class Chain(NodeWriteMixin):
         return int(self.client.get_balance(self.account.address))
 
     def fund(self, amount_wei: int = 10**20) -> str | None:
+        """Top up from the Studio faucet.
+
+        Deliberately not `client.fund_account`: genlayer-py 0.16.3 guards that method
+        with `if self.chain.id != localnet.id: raise "not connected to the localhost"`,
+        and localnet's id is 61999 -- the same id stable Studio happens to use. So the
+        SDK's faucet works on studionet by coincidence of a shared chain id and refuses
+        Studio Next (61997) for a reason that has nothing to do with Studio Next. The
+        underlying `sim_fundAccount` works there; only the client-side guard does not.
+        """
         if self.meta["faucet"] != "sim":
             return None
-        return self.client.fund_account(self.account.address, amount_wei).hex()
+        out = self.rpc("sim_fundAccount", [self.account.address, amount_wei])
+        if out.get("error"):
+            raise RuntimeError(f"sim_fundAccount failed: {out['error']}")
+        return str(out.get("result", ""))
 
     # ------------------------------------------------------------------- deployment
     def deploy(self, contract_path: str | Path, sim: SimConfig | None = None,

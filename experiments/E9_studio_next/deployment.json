@@ -1,0 +1,20 @@
+{
+  "network": "studio-next",
+  "chain_id": 61997,
+  "rpc": "https://studio-next.genlayer.com/api",
+  "runner": "py-genlayer:5jycge4q8k23462jtb0b9fyey1s9qz928sz2nbrd9mg4sxqg2qng",
+  "genvm": "v0.3.0-rc7",
+  "consensus": "v0.6",
+  "sdk": "genlayer-py 0.19.0rc2 (.venv-rc)",
+  "addresses": {
+    "probe": "0x025AF20b0eCD703Ab079568c24861308F09bD77d",
+    "registry": "0xBFE7D9f45241B7baD76f79A265e03703314100E1",
+    "escrow": "0x8467f1027A9657A90a26e9127aD24772837fC612"
+  },
+  "explorer": {
+    "probe": "https://explorer-studio-dev.genlayer.com/address/0x025AF20b0eCD703Ab079568c24861308F09bD77d",
+    "registry": "https://explorer-studio-dev.genlayer.com/address/0xBFE7D9f45241B7baD76f79A265e03703314100E1",
+    "escrow": "https://explorer-studio-dev.genlayer.com/address/0x8467f1027A9657A90a26e9127aD24772837fC612"
+  },
+  "recorded": "2026-09-16T11:03:45Z"
+}
